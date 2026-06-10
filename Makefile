@@ -36,8 +36,11 @@ deploy-device: ## Generate→build→install→launch on the connected iPhone (f
 		|| { echo "❌ Build/destination failed. Most common cause: $$DEVICE_NAME is locked — unlock the phone (keep it awake) and rerun 'make deploy-device'."; exit 70; }; \
 	APP="build/DerivedData/Build/Products/Debug-iphoneos/Velia.app"; \
 	echo "▸ Installing…"; xcrun devicectl device install app --device "$$DEVICE_ID" "$$APP" >/dev/null; \
-	echo "▸ Launching…"; xcrun devicectl device process launch --device "$$DEVICE_ID" $(APP_BUNDLE_ID) >/dev/null; \
-	echo "✅ Velia deployed to $$DEVICE_NAME — free-account profile valid ~7 days; rerun 'make deploy-device' when it expires."
+	echo "✅ Installed to $$DEVICE_NAME — free-account profile valid ~7 days; rerun 'make deploy-device' when it expires."; \
+	echo "▸ Launching…"; \
+	xcrun devicectl device process launch --device "$$DEVICE_ID" $(APP_BUNDLE_ID) >/dev/null 2>&1 \
+		&& echo "✅ Launched." \
+		|| echo "ℹ️  Install OK, but couldn't auto-launch (phone likely locked). Just unlock and tap the Velia icon."
 
 lint: ## SwiftFormat --lint + SwiftLint (skipped if not installed)
 	@command -v swiftformat >/dev/null 2>&1 && swiftformat --lint . || echo "swiftformat not installed — skipping"
