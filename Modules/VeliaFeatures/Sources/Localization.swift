@@ -66,6 +66,21 @@ enum Fmt {
         "\(dayMonth.string(from: interval.start)) – \(dayMonth.string(from: interval.end))"
     }
 
+    /// Vietnamese weekday initial (T2…T7, CN).
+    static func weekdayLetter(_ date: Date) -> String {
+        let symbols = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]
+        let idx = Calendar.current.component(.weekday, from: date) - 1
+        return symbols[idx]
+    }
+
+    /// "thg 6 2026" month + year title.
+    static func monthTitle(_ date: Date) -> String {
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "vi_VN")
+        df.setLocalizedDateFormatFromTemplate("MMMM yyyy")
+        return df.string(from: date).capitalized
+    }
+
     /// Width of a prediction window in whole days (the "honesty" signal).
     static func widthDays(_ interval: DateInterval) -> Int {
         Int((interval.duration / 86_400).rounded())

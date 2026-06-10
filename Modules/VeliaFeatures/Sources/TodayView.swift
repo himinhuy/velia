@@ -2,10 +2,12 @@ import SwiftUI
 import VeliaCore
 import VeliaDesignSystem
 
-/// Home screen. Shows the on-device prediction from day one with an honestly wide range that narrows
-/// as the user logs (PRD §retention mechanic). All numbers come from VeliaCore — this view only renders.
+/// Home / "Cycle" screen. Shows the on-device prediction from day one with an honestly wide range
+/// that narrows as the user logs (PRD §retention mechanic). All numbers come from VeliaCore.
 struct TodayView: View {
     @Environment(CycleStore.self) private var store
+    @Binding var trackDate: Date?
+    @State private var showProfile = false
 
     var body: some View {
         NavigationStack {
@@ -18,7 +20,7 @@ struct TodayView: View {
                     } else {
                         emptyState
                     }
-                    quickLog
+                    trackButton
                     Text(L.privacyFootnote)
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
@@ -27,11 +29,18 @@ struct TodayView: View {
                 .padding()
             }
             .background(Theme.screen)
-            .navigationTitle(L.today)
+            .navigationTitle("Chu kỳ")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showProfile = true } label: { Image(systemName: "gearshape") }
+                        .tint(Theme.accent)
+                }
+            }
+            .sheet(isPresented: $showProfile) { ProfileView(store: store) }
         }
     }
 
-    // MARK: - Header (current cycle day + phase)
+    // MARK: Header
 
     private var header: some View {
         VStack(spacing: Theme.spacingSmall) {
@@ -50,7 +59,7 @@ struct TodayView: View {
         .padding(.top, Theme.spacing)
     }
 
-    // MARK: - Prediction card
+    // MARK: Prediction card
 
     private func predictionCard(_ p: Prediction) -> some View {
         VStack(alignment: .leading, spacing: Theme.spacing) {
@@ -118,18 +127,17 @@ struct TodayView: View {
         .veliaCard()
     }
 
-    // MARK: - Quick action
+    // MARK: Track entry (reversible — opens the Track sheet, not a one-shot log)
 
-    private var quickLog: some View {
+    private var trackButton: some View {
         Button {
-            store.addPeriod(start: Date(), flow: .medium)
+            trackDate = Calendar.current.startOfDay(for: Date())
         } label: {
-            Label("Ghi kỳ kinh bắt đầu hôm nay", systemImage: "plus.circle.fill")
+            Label("Theo dõi hôm nay", systemImage: "plus.circle.fill")
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 4)
         }
         .buttonStyle(.borderedProminent)
         .tint(Theme.accent)
-        .disabled(store.hasPeriod(on: Date()))
     }
 }
