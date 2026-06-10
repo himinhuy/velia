@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The Phase 0 moat: engine must build, pass tests, and clear the accuracy/calibration gate.
+  engine-gate:
+    name: Engine — build, test & gate
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: VeliaCore
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app || true
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build
+        run: swift build
+
+      - name: Unit + property + gate tests
+        run: swift test
+
+      - name: Phase 0 benchmark gate (exit 0 = GO)
+        run: swift run velia-bench
+
+      - name: Gate stability (alternate seed)
+        run: swift run velia-bench 99
+
+  lint:
+    name: Lint & format
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: brew install swiftlint swiftformat
+      - name: SwiftFormat (lint mode)
+        run: swiftformat --lint .
+      - name: SwiftLint (strict)
+        run: swiftlint --strict
+
+  # Activates once the Tuist iOS project lands (Phase 1+). Kept here so the pipeline is ready.
+  app-build:
+    name: App — build & UI tests (pending scaffold)
+    runs-on: macos-15
+    if: ${{ hashFiles('Project.swift') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Tuist
+        run: curl -Ls https://install.tuist.io | bash
+      - name: Generate project
+        run: tuist install && tuist generate --no-open
+      - name: Build & test (iOS Simulator)
+        run: |
+          xcodebuild test \
+            -scheme Velia \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -resultBundlePath TestResults | xcpretty || exit 1

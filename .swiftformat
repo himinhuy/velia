@@ -1,0 +1,22 @@
+# Velia SwiftFormat config. See docs/engineering-practices.md §2.2.
+--swiftversion 6.0
+
+--exclude .build,Derived,**/*.generated.swift
+
+# Rules
+--enable isEmpty
+--enable redundantSelf
+--enable sortedImports
+--enable wrapMultilineStatementBraces
+--enable blankLinesAtStartOfScope
+--enable blankLinesAtEndOfScope
+
+--self remove
+--importgrouping testable-bottom
+--commas inline
+--trimwhitespace always
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
