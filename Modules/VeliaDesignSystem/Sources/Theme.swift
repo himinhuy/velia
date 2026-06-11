@@ -18,6 +18,10 @@ public enum Theme {
     public static let predicted = Color(red: 0.86, green: 0.80, blue: 0.90)
     /// Fertile-window / ovulation tint — a clear teal-blue (consistent across ring + calendar).
     public static let fertile = Color(red: 0.0, green: 0.58, blue: 0.69)
+    /// Follicular phase (after period, before the fertile window) — warm amber.
+    public static let follicular = Color(red: 0.88, green: 0.66, blue: 0.34)
+    /// Luteal phase (after ovulation, before the next period) — soft lavender.
+    public static let luteal = Color(red: 0.60, green: 0.52, blue: 0.80)
 
     /// Card surface.
     public static let card = Color(.secondarySystemBackground)

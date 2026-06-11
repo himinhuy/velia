@@ -28,9 +28,14 @@ struct CycleRingView: View {
                 .stroke(track, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
 
             if model.hasData {
+                // Phase arcs tile the whole cycle: menstrual → follicular → fertile → luteal.
                 arc(from: 0, days: model.periodLength, color: periodColor)
                 if let ov = model.ovulationRange {
+                    arc(fromDay: model.periodLength, toDay: ov.lowerBound, color: Theme.follicular)
                     arc(fromDay: ov.lowerBound, toDay: ov.upperBound, color: fertileColor)
+                    arc(fromDay: ov.upperBound, toDay: model.cycleLength, color: Theme.luteal)
+                } else {
+                    arc(fromDay: model.periodLength, toDay: model.cycleLength, color: Theme.follicular)
                 }
                 dayTicks
                 if let ovDay = model.ovulationDay {
