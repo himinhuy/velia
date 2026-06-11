@@ -14,6 +14,7 @@ struct ProfileView: View {
     @State private var segment: Segment
     @State private var includeAge: Bool
     @State private var birthYear: Int
+    @State private var iconOption: AppIconOption = .primary
 
     private let years = Array(1955...2012).reversed()
 
@@ -73,6 +74,21 @@ struct ProfileView: View {
                     Text("Yêu cầu Face ID, Touch ID hoặc mật mã mỗi khi mở Velia. Màn hình cũng được che khi chuyển ứng dụng.")
                 }
 
+                if AppIconOption.supported {
+                    Section {
+                        Picker("Biểu tượng", selection: $iconOption) {
+                            ForEach(AppIconOption.allCases) { Text($0.label).tag($0) }
+                        }
+                        .pickerStyle(.inline)
+                        .labelsHidden()
+                        .onChange(of: iconOption) { _, new in AppIconOption.apply(new) }
+                    } header: {
+                        Text("Biểu tượng ứng dụng")
+                    } footer: {
+                        Text("Biểu tượng trung tính giúp Velia kín đáo trên màn hình chính. Lưu ý: iOS không cho đổi tên hiển thị khi đang chạy — chỉ đổi được biểu tượng.")
+                    }
+                }
+
                 if let avg = store.averageCycleLength {
                     Section("Từ dữ liệu của bạn") {
                         LabeledContent("Độ dài chu kỳ thực tế", value: "\(avg) ngày")
@@ -82,6 +98,7 @@ struct ProfileView: View {
             }
             .navigationTitle("Hồ sơ")
             .navigationBarTitleDisplayMode(.inline)
+            .task { iconOption = AppIconOption.current }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Hủy") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
