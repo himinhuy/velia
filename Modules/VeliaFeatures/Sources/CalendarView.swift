@@ -29,10 +29,11 @@ struct CalendarView: View {
                 weekdayRow
                 Divider()
                 ScrollViewReader { proxy in
+                    let model = makeModel() // one prediction, shared by every cell
                     ScrollView {
                         LazyVStack(spacing: Theme.spacingLarge, pinnedViews: []) {
                             ForEach(months, id: \.self) { month in
-                                monthSection(month).id(cal.startOfMonth(for: month))
+                                monthSection(month, model).id(cal.startOfMonth(for: month))
                             }
                         }
                         .padding(.vertical)
@@ -79,21 +80,21 @@ struct CalendarView: View {
 
     // MARK: Month
 
-    private func monthSection(_ month: Date) -> some View {
+    private func monthSection(_ month: Date, _ model: CalModel) -> some View {
         VStack(spacing: 8) {
             Text(Fmt.monthTitle(month))
                 .font(.headline)
                 .frame(maxWidth: .infinity)
-            grid(month)
+            grid(month, model)
         }
     }
 
-    private func grid(_ month: Date) -> some View {
+    private func grid(_ month: Date, _ model: CalModel) -> some View {
         let days = monthDays(month)
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 4) {
             ForEach(Array(days.enumerated()), id: \.offset) { _, day in
                 if let day {
-                    dayCell(day)
+                    dayCell(day, model)
                 } else {
                     Color.clear.frame(height: 44)
                 }
@@ -102,8 +103,8 @@ struct CalendarView: View {
         .padding(.horizontal, 4)
     }
 
-    private func dayCell(_ day: Date) -> some View {
-        let s = state(for: day)
+    private func dayCell(_ day: Date, _ model: CalModel) -> some View {
+        let s = state(for: day, model)
         return Button {
             trackDate = cal.startOfDay(for: day)
         } label: {
@@ -168,13 +169,19 @@ struct CalendarView: View {
         var runEnd = false
 
         var textColor: Color {
-            if period { return .white }
+            if period || predictedPeriod { return .white }
             if today { return Theme.accent }
             return .primary
         }
     }
 
-    private func state(for day: Date) -> DayState {
+    /// A day is part of the red "period band" if it's logged OR a predicted period day
+    /// (the remaining expected days of the current period, or the predicted next period).
+    private func isBandDay(_ day: Date, _ m: CalModel) -> Bool {
+        store.isPeriodDay(on: day) || inRange(day, m.currentCompletion) || inRange(day, m.nextPeriod)
+    }
+
+    private func state(for day: Date, _ m: CalModel) -> DayState {
         var s = DayState()
         s.today = cal.isDateInToday(day)
         s.hasLog = store.hasAnyLog(on: day)
@@ -182,29 +189,23 @@ struct CalendarView: View {
         let prev = cal.date(byAdding: .day, value: -1, to: day)!
         let next = cal.date(byAdding: .day, value: 1, to: day)!
 
-        s.period = store.isPeriodDay(on: day)
-        if s.period {
-            s.runStart = !store.isPeriodDay(on: prev)
-            s.runEnd = !store.isPeriodDay(on: next)
+        if store.isPeriodDay(on: day) {
+            s.period = true
+        } else if inRange(day, m.currentCompletion) || inRange(day, m.nextPeriod) {
+            s.predictedPeriod = true
+        } else if let ov = m.fertile, inInterval(day, ov) {
+            s.fertile = true
+            s.runStart = !inInterval(prev, ov)
+            s.runEnd = !inInterval(next, ov)
+            if let od = m.ovulationDay, cal.isDate(day, inSameDayAs: od) { s.ovulation = true }
+            return s
+        } else {
             return s
         }
 
-        if let p = store.prediction {
-            // Don't tint days that already passed as "predicted".
-            if inInterval(day, p.nextPeriod) {
-                s.predictedPeriod = true
-                s.runStart = !inInterval(prev, p.nextPeriod)
-                s.runEnd = !inInterval(next, p.nextPeriod)
-            } else if let ov = p.ovulation, inInterval(day, ov) {
-                s.fertile = true
-                s.runStart = !inInterval(prev, ov)
-                s.runEnd = !inInterval(next, ov)
-                // Mark the middle of the fertile window as ovulation.
-                let mid = Date(timeIntervalSince1970:
-                    (ov.start.timeIntervalSince1970 + ov.end.timeIntervalSince1970) / 2)
-                if cal.isDate(day, inSameDayAs: mid) { s.ovulation = true }
-            }
-        }
+        // Period / predicted-period bands round only at the ends of the combined band.
+        s.runStart = !isBandDay(prev, m)
+        s.runEnd = !isBandDay(next, m)
         return s
     }
 
@@ -212,6 +213,50 @@ struct CalendarView: View {
         let start = cal.startOfDay(for: day)
         let end = cal.date(byAdding: .day, value: 1, to: start)!
         return interval.intersects(DateInterval(start: start, end: end))
+    }
+
+    private func inRange(_ day: Date, _ range: ClosedRange<Date>?) -> Bool {
+        guard let range else { return false }
+        let d = cal.startOfDay(for: day)
+        return d >= range.lowerBound && d <= range.upperBound
+    }
+
+    // MARK: Model — computed once (one prediction), shared by every cell
+
+    struct CalModel {
+        var currentCompletion: ClosedRange<Date>?  // remaining expected days of the current period
+        var nextPeriod: ClosedRange<Date>?         // predicted next period, period-length band
+        var fertile: DateInterval?
+        var ovulationDay: Date?
+    }
+
+    private func makeModel() -> CalModel {
+        var m = CalModel()
+        let periodLen = max(store.typicalPeriodLength, 1)
+        let today = cal.startOfDay(for: Date())
+
+        // Complete the current period up to `độ dài hành kinh` (muted continuation).
+        if let lastRun = store.periodRuns().last {
+            let expectedEnd = cal.date(byAdding: .day, value: periodLen - 1, to: lastRun.lowerBound)!
+            if expectedEnd > lastRun.upperBound && expectedEnd >= today {
+                let from = cal.date(byAdding: .day, value: 1, to: lastRun.upperBound)!
+                m.currentCompletion = from...expectedEnd
+            }
+        }
+
+        guard let p = store.prediction else { return m }
+
+        // Predicted next period: a period-length band starting at the expected start.
+        let start = cal.startOfDay(for: p.pointDate)
+        let end = cal.date(byAdding: .day, value: periodLen - 1, to: start)!
+        m.nextPeriod = start...end
+
+        if let ov = p.ovulation {
+            m.fertile = ov
+            m.ovulationDay = cal.startOfDay(for: Date(timeIntervalSince1970:
+                (ov.start.timeIntervalSince1970 + ov.end.timeIntervalSince1970) / 2))
+        }
+        return m
     }
 
     // MARK: Grid days
