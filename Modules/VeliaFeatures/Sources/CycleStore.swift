@@ -21,19 +21,49 @@ public final class CycleStore {
     /// Feelings / pain / other day-level symptoms.
     public private(set) var symptoms: [SymptomRecord]
     public var hasOnboarded: Bool
+    /// Typical bleeding length in days (used for the ring; not part of the engine prior).
+    public private(set) var typicalPeriodLength: Int
 
     private let predictor = BayesianCyclePredictor()
     private let deviceID = UUID()
     private let cal = Calendar.current
+    private let persistence: CyclePersistence?
 
     public init(profile: UserProfile = UserProfile(),
                 periodDays: [PeriodRecord] = [],
                 symptoms: [SymptomRecord] = [],
-                hasOnboarded: Bool = false) {
+                hasOnboarded: Bool = false,
+                typicalPeriodLength: Int = 5,
+                persistence: CyclePersistence? = nil) {
         self.profile = profile
         self.periodDays = periodDays
         self.symptoms = symptoms
         self.hasOnboarded = hasOnboarded
+        self.typicalPeriodLength = typicalPeriodLength
+        self.persistence = persistence
+
+        if let saved = persistence?.load() {
+            self.profile = UserProfile(birthYear: saved.birthYear,
+                                       typicalCycleLength: saved.typicalCycleLength,
+                                       segment: Segment(rawValue: saved.segmentRaw) ?? .unknown)
+            self.periodDays = saved.periodDays
+            self.symptoms = saved.symptoms
+            self.hasOnboarded = saved.hasOnboarded
+            self.typicalPeriodLength = saved.typicalPeriodLength
+        }
+    }
+
+    /// Persist current state (encrypted). Called after every mutation.
+    private func persist() {
+        persistence?.save(PersistedState(
+            hasOnboarded: hasOnboarded,
+            birthYear: profile.birthYear,
+            typicalCycleLength: profile.typicalCycleLength,
+            typicalPeriodLength: typicalPeriodLength,
+            segmentRaw: profile.segment.rawValue,
+            periodDays: periodDays,
+            symptoms: symptoms
+        ))
     }
 
     // MARK: - Derived: runs → cycle starts
@@ -143,6 +173,7 @@ public final class CycleStore {
         } else {
             periodDays.removeAll { cal.isDate($0.startDate, inSameDayAs: target) }
         }
+        persist()
     }
 
     /// Convenience used by tests/seed: mark a single day as a period day.
@@ -178,6 +209,7 @@ public final class CycleStore {
             symptoms.append(SymptomRecord(sync: SyncMetadata(deviceID: deviceID),
                                           date: target, type: category, value: 1, note: id))
         }
+        persist()
     }
 
     /// Whether any data (period or symptom) is logged on a day — for calendar dots.
@@ -188,15 +220,27 @@ public final class CycleStore {
 
     // MARK: - Profile
 
-    public func completeOnboarding(profile: UserProfile, lastPeriodStart: Date?) {
+    public func completeOnboarding(profile: UserProfile, lastPeriodStart: Date?, periodLength: Int = 5) {
         self.profile = profile
-        if let start = lastPeriodStart { addPeriod(start: start, flow: .medium) }
+        self.typicalPeriodLength = min(max(periodLength, 1), 10)
+        if let start = lastPeriodStart {
+            // Seed the most recent period as a run of `periodLength` days for an accurate ring.
+            let day0 = cal.startOfDay(for: start)
+            for offset in 0..<typicalPeriodLength {
+                if let d = cal.date(byAdding: .day, value: offset, to: day0), d <= Date() {
+                    addPeriod(start: d, flow: .medium)
+                }
+            }
+        }
         hasOnboarded = true
+        persist()
     }
 
-    public func updateProfile(typicalCycleLength: Int, segment: Segment, birthYear: Int?) {
+    public func updateProfile(typicalCycleLength: Int, segment: Segment, birthYear: Int?, periodLength: Int) {
         profile = UserProfile(birthYear: birthYear,
                               typicalCycleLength: typicalCycleLength,
                               segment: segment)
+        typicalPeriodLength = min(max(periodLength, 1), 10)
+        persist()
     }
 }

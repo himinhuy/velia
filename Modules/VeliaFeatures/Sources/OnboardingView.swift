@@ -11,6 +11,7 @@ struct OnboardingView: View {
     @State private var lastPeriod = Calendar.current.startOfDay(for: Date())
     @State private var knowsLastPeriod = true
     @State private var cycleLength = 28
+    @State private var periodLength = 5
     @State private var segment: Segment = .typical
     @State private var includeAge = false
     @State private var birthYear = 1995
@@ -39,6 +40,13 @@ struct OnboardingView: View {
                 Section("Độ dài chu kỳ thường gặp") {
                     Stepper("\(cycleLength) ngày", value: $cycleLength, in: 18...60)
                     Text("Khoảng cách giữa hai lần bắt đầu kỳ kinh. Mặc định 28 ngày.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Section("Số ngày hành kinh") {
+                    Stepper("\(periodLength) ngày", value: $periodLength, in: 1...10)
+                    Text("Kỳ kinh của bạn thường kéo dài bao nhiêu ngày (thường 2–6 ngày).")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -88,6 +96,7 @@ struct OnboardingView: View {
             segment: segment
         )
         store.completeOnboarding(profile: profile,
-                                 lastPeriodStart: knowsLastPeriod ? lastPeriod : nil)
+                                 lastPeriodStart: knowsLastPeriod ? lastPeriod : nil,
+                                 periodLength: periodLength)
     }
 }

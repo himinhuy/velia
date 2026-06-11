@@ -9,6 +9,7 @@ struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var cycleLength: Int
+    @State private var periodLength: Int
     @State private var segment: Segment
     @State private var includeAge: Bool
     @State private var birthYear: Int
@@ -18,6 +19,7 @@ struct ProfileView: View {
     init(store: CycleStore) {
         self.store = store
         _cycleLength = State(initialValue: store.profile.typicalCycleLength ?? 28)
+        _periodLength = State(initialValue: store.typicalPeriodLength)
         _segment = State(initialValue: store.profile.segment)
         _includeAge = State(initialValue: store.profile.birthYear != nil)
         _birthYear = State(initialValue: store.profile.birthYear ?? 1995)
@@ -29,10 +31,12 @@ struct ProfileView: View {
                 Section {
                     Stepper("Độ dài chu kỳ trung bình: \(cycleLength) ngày",
                             value: $cycleLength, in: 18...60)
+                    Stepper("Số ngày hành kinh: \(periodLength) ngày",
+                            value: $periodLength, in: 1...10)
                 } header: {
                     Text("Chu kỳ")
                 } footer: {
-                    Text("Khoảng cách trung bình giữa hai lần bắt đầu kỳ kinh. Velia dùng số này khi chưa có đủ dữ liệu, rồi tự học từ nhật ký của bạn.")
+                    Text("Độ dài chu kỳ = khoảng cách giữa hai lần bắt đầu kỳ kinh. Số ngày hành kinh = kỳ kinh kéo dài bao lâu (thường 2–6 ngày). Velia dùng các số này khi chưa đủ dữ liệu, rồi tự học từ nhật ký của bạn.")
                 }
 
                 Section {
@@ -73,7 +77,8 @@ struct ProfileView: View {
                     Button("Lưu") {
                         store.updateProfile(typicalCycleLength: cycleLength,
                                             segment: segment,
-                                            birthYear: includeAge ? birthYear : nil)
+                                            birthYear: includeAge ? birthYear : nil,
+                                            periodLength: periodLength)
                         dismiss()
                     }
                     .fontWeight(.semibold)

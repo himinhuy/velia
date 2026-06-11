@@ -5,7 +5,8 @@ import VeliaFeatures
 struct VeliaApp: App {
     var body: some Scene {
         WindowGroup {
-            RootView()
+            // Encrypted, on-device persistence so data + onboarding survive relaunch.
+            RootView(store: CycleStore(persistence: SecureStore.shared))
         }
     }
 }

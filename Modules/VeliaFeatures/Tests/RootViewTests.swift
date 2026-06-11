@@ -63,9 +63,38 @@ final class RootViewTests: XCTestCase {
 
     func testUpdateProfile() {
         let store = CycleStore()
-        store.updateProfile(typicalCycleLength: 31, segment: .pcos, birthYear: 1990)
+        store.updateProfile(typicalCycleLength: 31, segment: .pcos, birthYear: 1990, periodLength: 6)
         XCTAssertEqual(store.profile.typicalCycleLength, 31)
         XCTAssertEqual(store.profile.segment, .pcos)
         XCTAssertEqual(store.profile.birthYear, 1990)
+        XCTAssertEqual(store.typicalPeriodLength, 6)
     }
+
+    /// The re-onboarding bug: state must survive a fresh store backed by the same persistence.
+    func testPersistenceRoundTripSurvivesRelaunch() {
+        let mock = MockPersistence()
+        let store1 = CycleStore(persistence: mock)
+        store1.completeOnboarding(
+            profile: UserProfile(typicalCycleLength: 30, segment: .pcos),
+            lastPeriodStart: Date(),
+            periodLength: 4
+        )
+        store1.toggleSymptom(TrackCatalog.feelingCategory, "happy", on: Date())
+
+        // Simulate relaunch: brand-new store reading the same persistence.
+        let store2 = CycleStore(persistence: mock)
+        XCTAssertTrue(store2.hasOnboarded, "Onboarding must not reappear after relaunch")
+        XCTAssertEqual(store2.profile.typicalCycleLength, 30)
+        XCTAssertEqual(store2.profile.segment, .pcos)
+        XCTAssertEqual(store2.typicalPeriodLength, 4)
+        XCTAssertEqual(store2.periodDays.count, store1.periodDays.count)
+        XCTAssertTrue(store2.isSymptomSelected(TrackCatalog.feelingCategory, "happy", on: Date()))
+    }
+}
+
+/// In-memory persistence double (no Keychain/disk) for tests.
+private final class MockPersistence: CyclePersistence, @unchecked Sendable {
+    private var state: PersistedState?
+    func load() -> PersistedState? { state }
+    func save(_ state: PersistedState) { self.state = state }
 }

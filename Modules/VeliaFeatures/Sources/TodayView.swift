@@ -2,8 +2,9 @@ import SwiftUI
 import VeliaCore
 import VeliaDesignSystem
 
-/// Home / "Cycle" screen. Shows the on-device prediction from day one with an honestly wide range
-/// that narrows as the user logs (PRD §retention mechanic). All numbers come from VeliaCore.
+/// "Cycle" home screen — a circular cycle wheel (reference design) plus a quick way to log how you
+/// feel. The average cycle length is surfaced as a tappable pill, and a menu opens the full profile,
+/// so changing your inputs is always one tap away.
 struct TodayView: View {
     @Environment(CycleStore.self) private var store
     @Binding var trackDate: Date?
@@ -12,132 +13,97 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: Theme.spacingLarge) {
-                    header
-                    if let prediction = store.prediction {
-                        predictionCard(prediction)
-                        sharpenHint
-                    } else {
-                        emptyState
-                    }
-                    trackButton
+                VStack(spacing: Theme.spacing) {
+                    cycleLengthPill
+                    CycleRingView(model: CycleRingModel.from(store))
+                    feelCard
+                    if let p = store.prediction { confidenceLine(p) }
                     Text(L.privacyFootnote)
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .padding(.top, Theme.spacing)
                 }
                 .padding()
+                .padding(.bottom, 90) // clear the floating tab bar
             }
             .background(Theme.screen)
-            .navigationTitle("Chu kỳ")
+            .navigationTitle("Chu kỳ của bạn")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showProfile = true } label: { Image(systemName: "gearshape") }
-                        .tint(Theme.accent)
+                    Menu {
+                        Button {
+                            showProfile = true
+                        } label: {
+                            Label("Hồ sơ & độ dài chu kỳ", systemImage: "person.crop.circle")
+                        }
+                        Button {
+                            trackDate = Calendar.current.startOfDay(for: Date())
+                        } label: {
+                            Label("Ghi nhật ký hôm nay", systemImage: "plus.circle")
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal")
+                    }
+                    .tint(Theme.accent)
                 }
             }
             .sheet(isPresented: $showProfile) { ProfileView(store: store) }
         }
     }
 
-    // MARK: Header
+    // MARK: Cycle-length pill (visible + editable entry to inputs)
 
-    private var header: some View {
-        VStack(spacing: Theme.spacingSmall) {
-            if let day = store.cycleDay() {
-                Text("Ngày \(day) của chu kỳ")
-                    .font(.title3.weight(.semibold))
-                Text(L.phase(store.displayPhase()))
-                    .font(.subheadline)
+    private var cycleLengthPill: some View {
+        Button { showProfile = true } label: {
+            HStack(spacing: 6) {
+                Text("Độ dài chu kỳ:")
+                    .foregroundStyle(.secondary)
+                Text("\(store.profile.typicalCycleLength ?? 28) ngày")
+                    .fontWeight(.semibold)
                     .foregroundStyle(Theme.accent)
-            } else {
-                Text("Chưa có dữ liệu chu kỳ")
-                    .font(.title3.weight(.semibold))
+                Image(systemName: "chevron.down").font(.caption2).foregroundStyle(Theme.accent)
             }
+            .font(.subheadline)
+            .padding(.horizontal, 16).padding(.vertical, 9)
+            .background(Color(.secondarySystemBackground), in: Capsule())
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, Theme.spacing)
+        .buttonStyle(.plain)
     }
 
-    // MARK: Prediction card
+    // MARK: "How do you feel today?"
 
-    private func predictionCard(_ p: Prediction) -> some View {
-        VStack(alignment: .leading, spacing: Theme.spacing) {
-            Label("Kỳ kinh tiếp theo", systemImage: "drop.fill")
-                .font(.headline)
-                .foregroundStyle(Theme.accent)
-
-            Text(Fmt.range(p.nextPeriod))
-                .font(.system(.title, design: .rounded).weight(.bold))
-
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(Theme.color(forConfidence: p.confidence.rawValue))
-                    .frame(width: 9, height: 9)
-                Text(L.confidence(p.confidence))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+    private var feelCard: some View {
+        Button { trackDate = Calendar.current.startOfDay(for: Date()) } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "face.smiling")
+                    .font(.title3)
+                    .foregroundStyle(.white)
+                    .padding(8)
+                    .background(.orange, in: Circle())
+                Text("Hôm nay bạn cảm thấy thế nào?")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
                 Spacer()
-                Text("±\(max(Fmt.widthDays(p.nextPeriod) / 2, 1)) ngày")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Image(systemName: "chevron.right").foregroundStyle(.secondary)
             }
-
-            if p.mode == .tooIrregularToPredict {
-                Label("Chu kỳ đang khá thất thường — Velia chưa thể dự đoán chắc chắn. Cứ ghi nhật ký đều, dự đoán sẽ rõ dần.",
-                      systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-            }
-
-            if let ov = p.ovulation {
-                Divider()
-                Label("Cửa sổ rụng trứng", systemImage: "sparkles")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Theme.fertile)
-                Text(Fmt.range(ov))
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
+            .padding()
+            .background(Color(.orange).opacity(0.18), in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(.orange.opacity(0.4), lineWidth: 1))
         }
-        .veliaCard()
+        .buttonStyle(.plain)
     }
 
-    private var sharpenHint: some View {
-        let n = store.loggedCycleCount
-        let msg = n < 2
-            ? "Ghi thêm vài chu kỳ nữa để Velia thu hẹp khoảng dự đoán."
-            : "Dựa trên \(n) chu kỳ đã ghi. Càng ghi nhiều, dự đoán càng sắc."
-        return Label(msg, systemImage: "chart.line.uptrend.xyaxis")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var emptyState: some View {
-        VStack(spacing: Theme.spacing) {
-            Image(systemName: "calendar.badge.plus")
-                .font(.largeTitle)
-                .foregroundStyle(Theme.accent)
-            Text("Ghi kỳ kinh đầu tiên để bắt đầu dự đoán.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+    private func confidenceLine(_ p: Prediction) -> some View {
+        HStack(spacing: 8) {
+            Circle().fill(Theme.color(forConfidence: p.confidence.rawValue)).frame(width: 8, height: 8)
+            Text(L.confidence(p.confidence))
+            Text("· ±\(max(Fmt.widthDays(p.nextPeriod) / 2, 1)) ngày")
+            if store.loggedCycleCount < 2 {
+                Text("· ghi thêm để chính xác hơn")
+            }
         }
-        .veliaCard()
-    }
-
-    // MARK: Track entry (reversible — opens the Track sheet, not a one-shot log)
-
-    private var trackButton: some View {
-        Button {
-            trackDate = Calendar.current.startOfDay(for: Date())
-        } label: {
-            Label("Theo dõi hôm nay", systemImage: "plus.circle.fill")
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 4)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(Theme.accent)
+        .font(.caption)
+        .foregroundStyle(.secondary)
     }
 }

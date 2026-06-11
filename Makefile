@@ -20,6 +20,14 @@ bootstrap: ## Generate the Xcode project (requires Tuist)
 	@[ -n "$(TUIST)" ] || { echo "Tuist not installed — see https://tuist.io (or 'curl https://mise.run | sh && mise use -g tuist'). Engine targets still work without it."; exit 0; }
 	$(TUIST) install && $(TUIST) generate
 
+xcode: ## Open the app in Xcode cleanly (fixes "missing package product 'VeliaCore'")
+	@[ -n "$(TUIST)" ] && $(TUIST) generate --no-open >/dev/null 2>&1 || true
+	@# An EMPTY VeliaCore/.swiftpm/xcode (left by CLI builds) makes Xcode fail to load the
+	@# local package. Remove it + stale DerivedData so Xcode rebuilds clean package state.
+	@rm -rf VeliaCore/.swiftpm ~/Library/Developer/Xcode/DerivedData/Velia-*
+	@echo "▸ Opening Velia.xcworkspace (clean package state)…"
+	@open Velia.xcworkspace
+
 deploy-device: ## Generate→build→install→launch on the connected iPhone (free account: redo weekly)
 	@set -euo pipefail; \
 	[ -n "$(TUIST)" ] || { echo "❌ Tuist not found. Install: curl https://mise.run | sh && mise use -g tuist@latest"; exit 1; }; \
@@ -40,7 +48,8 @@ deploy-device: ## Generate→build→install→launch on the connected iPhone (f
 	echo "▸ Launching…"; \
 	xcrun devicectl device process launch --device "$$DEVICE_ID" $(APP_BUNDLE_ID) >/dev/null 2>&1 \
 		&& echo "✅ Launched." \
-		|| echo "ℹ️  Install OK, but couldn't auto-launch (phone likely locked). Just unlock and tap the Velia icon."
+		|| echo "ℹ️  Install OK, but couldn't auto-launch (phone likely locked). Just unlock and tap the Velia icon."; \
+	rm -rf VeliaCore/.swiftpm   # empty artifact left by xcodebuild breaks the Xcode IDE; keep tree clean
 
 lint: ## SwiftFormat --lint + SwiftLint (skipped if not installed)
 	@command -v swiftformat >/dev/null 2>&1 && swiftformat --lint . || echo "swiftformat not installed — skipping"
