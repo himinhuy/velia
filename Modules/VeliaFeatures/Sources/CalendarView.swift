@@ -26,6 +26,7 @@ struct CalendarView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 topBar
+                legend
                 weekdayRow
                 Divider()
                 ScrollViewReader { proxy in
@@ -76,6 +77,25 @@ struct CalendarView: View {
         }
         .padding(.horizontal, 4)
         .padding(.bottom, 6)
+    }
+
+    /// Colour key so the bands are self-explanatory.
+    private var legend: some View {
+        HStack(spacing: 14) {
+            swatch(Theme.accent, L2("Kỳ kinh", "Period"))
+            swatch(Theme.accent.opacity(0.4), L2("Dự đoán", "Predicted"))
+            swatch(Theme.fertile.opacity(0.75), L2("Ngày có thể thụ thai", "Fertile"))
+        }
+        .font(.caption2)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
+    }
+
+    private func swatch(_ color: Color, _ label: String) -> some View {
+        HStack(spacing: 5) {
+            RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 12, height: 12)
+            Text(label).foregroundStyle(.secondary)
+        }
     }
 
     // MARK: Month
@@ -150,7 +170,7 @@ struct CalendarView: View {
             UnevenRoundedRectangle(
                 topLeadingRadius: s.runStart ? 16 : 0, bottomLeadingRadius: s.runStart ? 16 : 0,
                 bottomTrailingRadius: s.runEnd ? 16 : 0, topTrailingRadius: s.runEnd ? 16 : 0
-            ).fill(Theme.fertile.opacity(0.55))
+            ).fill(Theme.fertile.opacity(0.75))
         } else {
             Color.clear
         }

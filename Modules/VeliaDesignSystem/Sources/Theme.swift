@@ -16,8 +16,8 @@ public enum Theme {
     public static let accentSoft = Color(red: 0.93, green: 0.74, blue: 0.76)
     /// Predicted-window tint (lighter, "uncertain" feel).
     public static let predicted = Color(red: 0.86, green: 0.80, blue: 0.90)
-    /// Fertile/ovulation tint.
-    public static let fertile = Color(red: 0.55, green: 0.72, blue: 0.66)
+    /// Fertile-window / ovulation tint — a clear teal-blue (consistent across ring + calendar).
+    public static let fertile = Color(red: 0.0, green: 0.58, blue: 0.69)
 
     /// Card surface.
     public static let card = Color(.secondarySystemBackground)

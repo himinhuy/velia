@@ -17,7 +17,7 @@ struct CycleRingView: View {
 
     // Brighter palette to match the reference (independent of the app's rose accent).
     private let periodColor = Color(red: 0.95, green: 0.29, blue: 0.31)
-    private let fertileColor = Color(red: 0.0, green: 0.58, blue: 0.69)
+    private let fertileColor = Theme.fertile
     private let ovulationDot = Color(red: 0.52, green: 0.81, blue: 0.95)
     private let track = Color.white.opacity(0.10)
 
