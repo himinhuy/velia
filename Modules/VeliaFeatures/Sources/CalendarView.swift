@@ -8,6 +8,7 @@ import VeliaDesignSystem
 struct CalendarView: View {
     @Environment(CycleStore.self) private var store
     @Binding var trackDate: Date?
+    @State private var detailDate: Date?
 
     private var cal: Calendar {
         var c = Calendar(identifier: .gregorian)
@@ -44,6 +45,16 @@ struct CalendarView: View {
             }
             .background(Theme.screen)
             .navigationBarHidden(true)
+            .sheet(item: Binding(
+                get: { detailDate.map { CalDay(date: $0) } },
+                set: { detailDate = $0?.date }
+            )) { wrapper in
+                DayDetailView(store: store, date: wrapper.date, onEdit: {
+                    detailDate = nil
+                    trackDate = wrapper.date
+                })
+                .presentationDetents([.medium, .large])
+            }
         }
     }
 
@@ -126,7 +137,7 @@ struct CalendarView: View {
     private func dayCell(_ day: Date, _ model: CalModel) -> some View {
         let s = state(for: day, model)
         return Button {
-            trackDate = cal.startOfDay(for: day)
+            detailDate = cal.startOfDay(for: day)
         } label: {
             ZStack(alignment: .topTrailing) {
                 band(s)
@@ -303,4 +314,10 @@ private extension Calendar {
     func startOfMonth(for date: Date) -> Date {
         dateInterval(of: .month, for: date)?.start ?? date
     }
+}
+
+/// Wrapper so a tapped day can drive a `.sheet(item:)`.
+private struct CalDay: Identifiable {
+    let date: Date
+    var id: TimeInterval { date.timeIntervalSince1970 }
 }
