@@ -28,10 +28,11 @@ public protocol CyclePersistence: Sendable {
 /// ahead of the full SQLCipher/GRDB + Secure-Enclave-gated key in Phase 1; the data layout stays
 /// sync-ready so migration is mechanical.
 public final class SecureStore: CyclePersistence, @unchecked Sendable {
+    /// Legacy single-profile store (the first/default profile inherits this file).
     public static let shared = SecureStore()
 
     private let keychainAccount = "app.velia.db-key"
-    private let fileName = "velia-state.enc"
+    private let fileName: String
 
     private var fileURL: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -39,24 +40,37 @@ public final class SecureStore: CyclePersistence, @unchecked Sendable {
         return dir.appendingPathComponent(fileName)
     }
 
-    public init() {}
+    /// `fileName` scopes the encrypted file — one per profile. All files share the device key.
+    public init(fileName: String = "velia-state.enc") {
+        self.fileName = fileName
+    }
+
+    /// Delete this profile's encrypted file (when a profile is removed).
+    public func deleteFile() {
+        try? FileManager.default.removeItem(at: fileURL)
+    }
 
     // MARK: CyclePersistence
 
-    public func load() -> PersistedState? {
+    public func load() -> PersistedState? { loadCodable(PersistedState.self) }
+    public func save(_ state: PersistedState) { saveCodable(state) }
+
+    // MARK: Generic encrypted Codable (also used for the profile registry)
+
+    public func loadCodable<T: Decodable>(_ type: T.Type) -> T? {
         guard let blob = try? Data(contentsOf: fileURL) else { return nil }
         do {
             let box = try AES.GCM.SealedBox(combined: blob)
             let clear = try AES.GCM.open(box, using: key())
-            return try JSONDecoder().decode(PersistedState.self, from: clear)
+            return try JSONDecoder().decode(T.self, from: clear)
         } catch {
             return nil // corrupt or key rotated — start fresh rather than crash
         }
     }
 
-    public func save(_ state: PersistedState) {
+    public func saveCodable<T: Encodable>(_ value: T) {
         do {
-            let clear = try JSONEncoder().encode(state)
+            let clear = try JSONEncoder().encode(value)
             let sealed = try AES.GCM.seal(clear, using: key())
             guard let combined = sealed.combined else { return }
             try combined.write(to: fileURL, options: [.atomic, .completeFileProtection])

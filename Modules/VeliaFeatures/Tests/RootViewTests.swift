@@ -146,3 +146,53 @@ private final class MockPersistence: CyclePersistence, @unchecked Sendable {
     func load() -> PersistedState? { state }
     func save(_ state: PersistedState) { self.state = state }
 }
+
+/// In-memory registry double (no Keychain/disk).
+private final class MockRegistry: RegistryPersistence, @unchecked Sendable {
+    private var registry: ProfileRegistry?
+    func loadRegistry() -> ProfileRegistry? { registry }
+    func saveRegistry(_ registry: ProfileRegistry) { self.registry = registry }
+}
+
+@MainActor
+final class ProfileStoreTests: XCTestCase {
+    private func makeStore(stores: @escaping (ProfileInfo) -> CycleStore) -> ProfileStore {
+        ProfileStore(registryStore: MockRegistry(), makeStore: stores)
+    }
+
+    /// Each profile gets its own store (data isolation); switching is non-destructive.
+    func testProfileDataIsolation() {
+        var stores: [String: MockPersistence] = [:]
+        let ps = makeStore { info in
+            let p = stores[info.dataFile] ?? MockPersistence()
+            stores[info.dataFile] = p
+            return CycleStore(persistence: p)
+        }
+        // First run seeds one default profile and auto-enters it.
+        XCTAssertEqual(ps.profiles.count, 1)
+        XCTAssertNotNil(ps.current)
+        ps.current?.addPeriod(start: Date())
+
+        // Add a second profile, switch to it: its store is empty (isolated).
+        let second = ps.createProfile(name: "Em gái", pin: nil)
+        XCTAssertTrue(ps.enter(second.id, pin: nil))
+        XCTAssertEqual(ps.current?.periodDays.count, 0, "Second profile has its own empty data")
+    }
+
+    func testPINGate() {
+        let ps = makeStore { _ in CycleStore() }
+        let p = ps.createProfile(name: "Khóa", pin: "1234")
+        XCTAssertTrue(ps.profile(p.id)?.hasPIN ?? false)
+        XCTAssertFalse(ps.enter(p.id, pin: "0000"), "Wrong PIN is rejected")
+        XCTAssertFalse(ps.enter(p.id, pin: nil), "Missing PIN is rejected")
+        XCTAssertTrue(ps.enter(p.id, pin: "1234"), "Correct PIN unlocks")
+        XCTAssertEqual(ps.activeID, p.id)
+    }
+
+    func testCannotDeleteLastProfile() {
+        let ps = makeStore { _ in CycleStore() }
+        let only = ps.profiles[0].id
+        ps.deleteProfile(only)
+        XCTAssertEqual(ps.profiles.count, 1, "The last profile can't be deleted")
+    }
+}

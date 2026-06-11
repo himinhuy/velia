@@ -5,8 +5,8 @@ import VeliaFeatures
 struct VeliaApp: App {
     var body: some Scene {
         WindowGroup {
-            // Encrypted, on-device persistence so data + onboarding survive relaunch.
-            RootView(store: CycleStore(persistence: SecureStore.shared))
+            // Local profiles, each with its own encrypted on-device store. No account, no network.
+            RootView()
         }
     }
 }

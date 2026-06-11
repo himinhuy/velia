@@ -8,6 +8,7 @@ struct ProfileView: View {
     let store: CycleStore
     @Environment(LockManager.self) private var lock
     @Environment(LanguageManager.self) private var lang
+    @Environment(ProfileStore.self) private var profiles
     @Environment(\.dismiss) private var dismiss
 
     @State private var cycleLength: Int
@@ -71,6 +72,22 @@ struct ProfileView: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        ProfilesManagementView()
+                    } label: {
+                        Label(L2("Hồ sơ người dùng", "Profiles"), systemImage: "person.2.fill")
+                    }
+                    Button {
+                        dismiss()
+                        profiles.lockToGate()
+                    } label: {
+                        Label(L2("Đổi hồ sơ / khóa", "Switch profile / lock"), systemImage: "arrow.left.arrow.right")
+                    }
+                } header: {
+                    Text(L2("Hồ sơ", "Profiles"))
+                }
+
+                Section {
                     Picker(L2("Ngôn ngữ", "Language"), selection: Binding(
                         get: { lang.language }, set: { lang.language = $0 }
                     )) {
@@ -117,7 +134,7 @@ struct ProfileView: View {
                     }
                 }
             }
-            .navigationTitle(L2("Hồ sơ", "Profile"))
+            .navigationTitle(L2("Cài đặt", "Settings"))
             .navigationBarTitleDisplayMode(.inline)
             .task { iconOption = AppIconOption.current }
             .toolbar {

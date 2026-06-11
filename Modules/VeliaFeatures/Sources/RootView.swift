@@ -6,7 +6,7 @@ import VeliaDesignSystem
 /// center Track button (reference screenshot). State lives in one `CycleStore` injected into the
 /// environment; predictions are computed on-device by VeliaCore.
 public struct RootView: View {
-    @State private var store: CycleStore
+    @State private var profiles: ProfileStore
     @State private var lock = LockManager()
     @State private var lang = LanguageManager()
     @State private var tab: Tab = .cycle
@@ -16,20 +16,24 @@ public struct RootView: View {
 
     public enum Tab: Hashable { case cycle, calendar, analysis, content }
 
-    public init(store: CycleStore = CycleStore()) {
-        _store = State(initialValue: store)
+    public init(profiles: ProfileStore = ProfileStore()) {
+        _profiles = State(initialValue: profiles)
     }
 
     public var body: some View {
         ZStack {
-            mainContent
+            if let store = profiles.current {
+                mainContent(store)
+            } else {
+                ProfileGateView()
+            }
 
             // App-switcher privacy cover: hide content whenever the scene isn't active.
             if scenePhase != .active && !lock.isLocked {
                 Theme.screen.ignoresSafeArea()
                     .overlay(Image(systemName: "lock.fill").font(.largeTitle).foregroundStyle(.secondary))
             }
-            // Lock gate.
+            // Biometric lock gate (opt-in), on top of everything.
             if lock.isLocked {
                 LockScreenView(lock: lock)
                     .transition(.opacity)
@@ -37,6 +41,7 @@ public struct RootView: View {
         }
         .environment(lock)
         .environment(lang)
+        .environment(profiles)
         .id(lang.language) // rebuild the tree so every L2(...) re-evaluates on language switch
         .task { await lock.authenticate() }
         .onChange(of: scenePhase) { _, phase in
@@ -51,9 +56,9 @@ public struct RootView: View {
         }
     }
 
-    private var mainContent: some View {
+    private func mainContent(_ store: CycleStore) -> some View {
         ZStack(alignment: .bottom) {
-            content
+            content(store)
                 .environment(store)
             tabBar
         }
@@ -70,7 +75,7 @@ public struct RootView: View {
     }
 
     @ViewBuilder
-    private var content: some View {
+    private func content(_ store: CycleStore) -> some View {
         switch tab {
         case .cycle: TodayView(trackDate: $trackDate)
         case .calendar: CalendarView(trackDate: $trackDate)
