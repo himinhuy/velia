@@ -103,6 +103,14 @@ final class RootViewTests: XCTestCase {
         XCTAssertNil(store.prediction, "Track-without-period must not fake a forecast")
     }
 
+    func testLockLogic() {
+        let lock = LockManager()
+        lock.isEnabled = true
+        XCTAssertTrue(lock.isLocked, "Enabled + not-yet-unlocked ⇒ locked")
+        lock.isEnabled = false
+        XCTAssertFalse(lock.isLocked, "Disabled ⇒ never locked")
+    }
+
     func testLockedModeIsRejected() {
         let store = CycleStore()
         store.setMode(.pregnancy)

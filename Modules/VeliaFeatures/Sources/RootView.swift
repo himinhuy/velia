@@ -7,9 +7,11 @@ import VeliaDesignSystem
 /// environment; predictions are computed on-device by VeliaCore.
 public struct RootView: View {
     @State private var store: CycleStore
+    @State private var lock = LockManager()
     @State private var tab: Tab = .cycle
     /// Non-nil while the Track sheet is open, holding the day being logged.
     @State private var trackDate: Date?
+    @Environment(\.scenePhase) private var scenePhase
 
     public enum Tab: Hashable { case cycle, calendar, analysis, content }
 
@@ -18,6 +20,35 @@ public struct RootView: View {
     }
 
     public var body: some View {
+        ZStack {
+            mainContent
+
+            // App-switcher privacy cover: hide content whenever the scene isn't active.
+            if scenePhase != .active && !lock.isLocked {
+                Theme.screen.ignoresSafeArea()
+                    .overlay(Image(systemName: "lock.fill").font(.largeTitle).foregroundStyle(.secondary))
+            }
+            // Lock gate.
+            if lock.isLocked {
+                LockScreenView(lock: lock)
+                    .transition(.opacity)
+            }
+        }
+        .environment(lock)
+        .task { await lock.authenticate() }
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .active:
+                Task { await lock.authenticate() }
+            case .background:
+                lock.lock() // require auth on return
+            default:
+                break
+            }
+        }
+    }
+
+    private var mainContent: some View {
         ZStack(alignment: .bottom) {
             content
                 .environment(store)

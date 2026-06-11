@@ -6,6 +6,7 @@ import VeliaDesignSystem
 /// cycle length, cycle regularity (segment), and optional birth year — after onboarding.
 struct ProfileView: View {
     let store: CycleStore
+    @Environment(LockManager.self) private var lock
     @Environment(\.dismiss) private var dismiss
 
     @State private var cycleLength: Int
@@ -60,6 +61,16 @@ struct ProfileView: View {
                     }
                 } footer: {
                     Text("Tùy chọn. Dữ liệu chỉ ở trên máy này — không tài khoản, không gửi đi đâu cả.")
+                }
+
+                Section {
+                    Toggle("Khóa ứng dụng (Face ID / mật mã)", isOn: Binding(
+                        get: { lock.isEnabled }, set: { lock.isEnabled = $0 }
+                    ))
+                } header: {
+                    Text("Riêng tư")
+                } footer: {
+                    Text("Yêu cầu Face ID, Touch ID hoặc mật mã mỗi khi mở Velia. Màn hình cũng được che khi chuyển ứng dụng.")
                 }
 
                 if let avg = store.averageCycleLength {

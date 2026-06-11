@@ -7,6 +7,7 @@ import VeliaDesignSystem
 /// logs summary. The ≡ menu opens Profile and "Đổi chế độ" (switch mode).
 struct TodayView: View {
     @Environment(CycleStore.self) private var store
+    @Environment(LockManager.self) private var lock
     @Binding var trackDate: Date?
     @State private var showProfile = false
     @State private var showModePicker = false
@@ -44,6 +45,12 @@ struct TodayView: View {
                         }
                         Button { trackDate = Calendar.current.startOfDay(for: Date()) } label: {
                             Label("Ghi nhật ký hôm nay", systemImage: "plus.circle")
+                        }
+                        if lock.isEnabled {
+                            Divider()
+                            Button { lock.lock() } label: {
+                                Label("Khóa ngay", systemImage: "lock.fill")
+                            }
                         }
                     } label: {
                         Image(systemName: "line.3.horizontal")
