@@ -17,6 +17,17 @@ enum TrackCatalog {
     static let energyCategory = "energy"   // single-choice
     static let sleepCategory = "sleep"     // single-choice
     static let sexCategory = "sex"         // single-choice
+    static let dischargeCategory = "discharge" // single-choice (general, non-conceive modes)
+
+    /// Single-choice: general discharge type (conceive mode uses the detailed cervical-mucus picker).
+    static let discharge: [TrackItem] = [
+        TrackItem(id: "dry", label: "Khô", symbol: "circle", color: .teal),
+        TrackItem(id: "sticky", label: "Dính", symbol: "circle.dotted", color: .teal),
+        TrackItem(id: "creamy", label: "Kem", symbol: "drop.halffull", color: .teal),
+        TrackItem(id: "eggwhite", label: "Trong, dai", symbol: "drop.fill", color: .teal),
+        TrackItem(id: "watery", label: "Loãng", symbol: "drop", color: .teal),
+        TrackItem(id: "unusual", label: "Bất thường", symbol: "exclamationmark.circle", color: .teal),
+    ]
 
     /// Single-choice: one energy level per day.
     static let energy: [TrackItem] = [

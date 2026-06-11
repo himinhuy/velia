@@ -24,6 +24,9 @@ struct TrackSheet: View {
                         symptomSection("Cơn đau", category: TrackCatalog.painCategory, items: TrackCatalog.pains)
                         exclusiveSection("Năng lượng", category: TrackCatalog.energyCategory, items: TrackCatalog.energy)
                         exclusiveSection("Giấc ngủ", category: TrackCatalog.sleepCategory, items: TrackCatalog.sleep)
+                        if store.mode != .conceive {
+                            exclusiveSection("Dịch tiết", category: TrackCatalog.dischargeCategory, items: TrackCatalog.discharge)
+                        }
                         exclusiveSection("Quan hệ", category: TrackCatalog.sexCategory, items: TrackCatalog.sex)
                         noteField
                     }
