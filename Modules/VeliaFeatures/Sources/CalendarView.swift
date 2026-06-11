@@ -186,6 +186,9 @@ struct CalendarView: View {
         s.today = cal.isDateInToday(day)
         s.hasLog = store.hasAnyLog(on: day)
 
+        // No-forecast mode: show only logged-day dots, never bands/predictions.
+        guard store.mode.predictsCycle else { return s }
+
         let prev = cal.date(byAdding: .day, value: -1, to: day)!
         let next = cal.date(byAdding: .day, value: 1, to: day)!
 
@@ -232,6 +235,7 @@ struct CalendarView: View {
 
     private func makeModel() -> CalModel {
         var m = CalModel()
+        guard store.mode.predictsCycle else { return m }
         let periodLen = max(store.typicalPeriodLength, 1)
         let today = cal.startOfDay(for: Date())
 

@@ -19,6 +19,7 @@ struct TrackSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: Theme.spacingLarge) {
                         flowSection
+                        if store.mode == .conceive { fertilitySection }
                         symptomSection("Cảm xúc", category: TrackCatalog.feelingCategory, items: TrackCatalog.feelings)
                         symptomSection("Cơn đau", category: TrackCatalog.painCategory, items: TrackCatalog.pains)
                     }
@@ -138,6 +139,85 @@ struct TrackSheet: View {
                 }
             }
         }
+    }
+
+    // MARK: Fertility signals (conceive mode) — logging only, Tier-1
+
+    private let mucusOptions: [(String?, String)] = [
+        (nil, "Không ghi"), ("dry", "Khô"), ("sticky", "Dính"),
+        ("creamy", "Kem"), ("eggwhite", "Trứng sống / dai"), ("watery", "Ướt"),
+    ]
+    private let lhOptions: [(String?, String)] = [
+        (nil, "Không ghi"), ("negative", "Âm tính"), ("peak", "Đỉnh (dương tính)"),
+    ]
+
+    private func entry() -> FertilityRecord? { store.fertilityEntry(on: selectedDate) }
+
+    private var fertilitySection: some View {
+        VStack(alignment: .leading, spacing: Theme.spacing) {
+            sectionHeader("Khả năng sinh sản")
+
+            // BBT
+            VStack(alignment: .leading, spacing: 6) {
+                Toggle("Nhiệt độ cơ thể (BBT)", isOn: Binding(
+                    get: { entry()?.bbtCelsius != nil },
+                    set: { on in writeBBT(on ? (entry()?.bbtCelsius ?? 36.50) : nil) }
+                ))
+                if let bbt = entry()?.bbtCelsius {
+                    Stepper(String(format: "%.2f °C", bbt), value: Binding(
+                        get: { bbt }, set: { writeBBT($0) }
+                    ), in: 35.0...38.5, step: 0.05)
+                }
+            }
+            .padding().background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+
+            pickerRow("Dịch nhầy cổ tử cung", options: mucusOptions,
+                      selected: entry()?.cervicalMucus) { writeMucus($0) }
+            pickerRow("Que thử LH", options: lhOptions,
+                      selected: entry()?.lhTest) { writeLH($0) }
+
+            HStack {
+                TrackTile(symbol: "heart.circle.fill", label: "Quan hệ", tint: Theme.accent,
+                          selected: store.isSymptomSelected("intimacy", "logged", on: selectedDate)) {
+                    store.toggleSymptom("intimacy", "logged", on: selectedDate)
+                }
+                .frame(width: 100)
+                Spacer()
+            }
+
+            Text("Velia không phải công cụ tránh thai hay chẩn đoán y khoa. Hãy tham khảo ý kiến bác sĩ.")
+                .font(.caption2).foregroundStyle(.secondary)
+        }
+    }
+
+    private func pickerRow(_ title: String, options: [(String?, String)],
+                           selected: String?, set: @escaping (String?) -> Void) -> some View {
+        HStack {
+            Text(title).font(.subheadline)
+            Spacer()
+            Menu {
+                ForEach(options, id: \.1) { value, label in
+                    Button(label) { set(value) }
+                }
+            } label: {
+                let current = options.first { $0.0 == selected }?.1 ?? "Không ghi"
+                Text(current).font(.subheadline.weight(.medium)).foregroundStyle(Theme.accent)
+            }
+        }
+        .padding().background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func writeBBT(_ v: Double?) {
+        let e = entry()
+        store.setFertility(on: selectedDate, bbtCelsius: v, cervicalMucus: e?.cervicalMucus, lhTest: e?.lhTest)
+    }
+    private func writeMucus(_ v: String?) {
+        let e = entry()
+        store.setFertility(on: selectedDate, bbtCelsius: e?.bbtCelsius, cervicalMucus: v, lhTest: e?.lhTest)
+    }
+    private func writeLH(_ v: String?) {
+        let e = entry()
+        store.setFertility(on: selectedDate, bbtCelsius: e?.bbtCelsius, cervicalMucus: e?.cervicalMucus, lhTest: v)
     }
 
     private func sectionHeader(_ t: String) -> some View {

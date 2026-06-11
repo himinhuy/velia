@@ -23,6 +23,10 @@ public final class CycleStore {
     public var hasOnboarded: Bool
     /// Typical bleeding length in days (used for the ring; not part of the engine prior).
     public private(set) var typicalPeriodLength: Int
+    /// Tracking intent — a non-destructive UI lens over the same data.
+    public private(set) var mode: TrackingMode
+    /// Manual fertility signals (BBT / cervical mucus / LH) — used in conceive mode.
+    public private(set) var fertility: [FertilityRecord]
 
     private let predictor = BayesianCyclePredictor()
     private let deviceID = UUID()
@@ -34,12 +38,16 @@ public final class CycleStore {
                 symptoms: [SymptomRecord] = [],
                 hasOnboarded: Bool = false,
                 typicalPeriodLength: Int = 5,
+                mode: TrackingMode = .period,
+                fertility: [FertilityRecord] = [],
                 persistence: CyclePersistence? = nil) {
         self.profile = profile
         self.periodDays = periodDays
         self.symptoms = symptoms
         self.hasOnboarded = hasOnboarded
         self.typicalPeriodLength = typicalPeriodLength
+        self.mode = mode
+        self.fertility = fertility
         self.persistence = persistence
 
         if let saved = persistence?.load() {
@@ -50,6 +58,8 @@ public final class CycleStore {
             self.symptoms = saved.symptoms
             self.hasOnboarded = saved.hasOnboarded
             self.typicalPeriodLength = saved.typicalPeriodLength
+            self.mode = saved.modeRaw.flatMap(TrackingMode.init(rawValue:)) ?? .period
+            self.fertility = saved.fertility ?? []
         }
     }
 
@@ -62,7 +72,9 @@ public final class CycleStore {
             typicalPeriodLength: typicalPeriodLength,
             segmentRaw: profile.segment.rawValue,
             periodDays: periodDays,
-            symptoms: symptoms
+            symptoms: symptoms,
+            modeRaw: mode.rawValue,
+            fertility: fertility
         ))
     }
 
@@ -102,9 +114,10 @@ public final class CycleStore {
         cycleStarts.map { PeriodEvent(startDate: $0) }
     }
 
-    /// The calibrated on-device prediction (nil until at least one period is known).
+    /// The calibrated on-device prediction. Nil when there's no history, or in modes that don't
+    /// forecast a cycle (e.g. track-without-period) — we never fake a prediction.
     public var prediction: Prediction? {
-        guard !history.isEmpty else { return nil }
+        guard mode.predictsCycle, !history.isEmpty else { return nil }
         return predictor.predict(history: history, profile: profile, asOf: lastPeriodStart ?? Date())
     }
 
@@ -216,11 +229,41 @@ public final class CycleStore {
     public func hasAnyLog(on day: Date) -> Bool {
         let target = cal.startOfDay(for: day)
         return isPeriodDay(on: day) || symptoms.contains { cal.isDate($0.date, inSameDayAs: target) }
+            || fertility.contains { cal.isDate($0.date, inSameDayAs: target) }
+    }
+
+    // MARK: - Fertility signals (conceive mode)
+
+    public func fertilityEntry(on day: Date) -> FertilityRecord? {
+        let target = cal.startOfDay(for: day)
+        return fertility.first { cal.isDate($0.date, inSameDayAs: target) }
+    }
+
+    /// Set/clear a fertility signal for a day. Passing all-nil removes the entry.
+    public func setFertility(on day: Date, bbtCelsius: Double?, cervicalMucus: String?, lhTest: String?) {
+        let target = cal.startOfDay(for: day)
+        fertility.removeAll { cal.isDate($0.date, inSameDayAs: target) }
+        if bbtCelsius != nil || cervicalMucus != nil || lhTest != nil {
+            fertility.append(FertilityRecord(sync: SyncMetadata(deviceID: deviceID),
+                                             date: target, bbtCelsius: bbtCelsius,
+                                             cervicalMucus: cervicalMucus, lhTest: lhTest))
+        }
+        persist()
+    }
+
+    // MARK: - Mode
+
+    public func setMode(_ newMode: TrackingMode) {
+        guard newMode.isFunctional else { return }
+        mode = newMode
+        persist()
     }
 
     // MARK: - Profile
 
-    public func completeOnboarding(profile: UserProfile, lastPeriodStart: Date?, periodLength: Int = 5) {
+    public func completeOnboarding(mode: TrackingMode = .period, profile: UserProfile,
+                                   lastPeriodStart: Date?, periodLength: Int = 5) {
+        self.mode = mode.isFunctional ? mode : .period
         self.profile = profile
         self.typicalPeriodLength = min(max(periodLength, 1), 10)
         if let start = lastPeriodStart {

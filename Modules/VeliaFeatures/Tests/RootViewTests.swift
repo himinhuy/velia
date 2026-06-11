@@ -75,20 +75,41 @@ final class RootViewTests: XCTestCase {
         let mock = MockPersistence()
         let store1 = CycleStore(persistence: mock)
         store1.completeOnboarding(
+            mode: .conceive,
             profile: UserProfile(typicalCycleLength: 30, segment: .pcos),
             lastPeriodStart: Date(),
             periodLength: 4
         )
         store1.toggleSymptom(TrackCatalog.feelingCategory, "happy", on: Date())
+        store1.setFertility(on: Date(), bbtCelsius: 36.6, cervicalMucus: "eggwhite", lhTest: "peak")
 
         // Simulate relaunch: brand-new store reading the same persistence.
         let store2 = CycleStore(persistence: mock)
         XCTAssertTrue(store2.hasOnboarded, "Onboarding must not reappear after relaunch")
+        XCTAssertEqual(store2.mode, .conceive)
         XCTAssertEqual(store2.profile.typicalCycleLength, 30)
-        XCTAssertEqual(store2.profile.segment, .pcos)
         XCTAssertEqual(store2.typicalPeriodLength, 4)
         XCTAssertEqual(store2.periodDays.count, store1.periodDays.count)
         XCTAssertTrue(store2.isSymptomSelected(TrackCatalog.feelingCategory, "happy", on: Date()))
+        XCTAssertEqual(store2.fertilityEntry(on: Date())?.cervicalMucus, "eggwhite")
+    }
+
+    func testTrackWithoutPeriodSuppressesPrediction() {
+        let store = CycleStore()
+        store.addPeriod(start: Calendar.current.date(byAdding: .day, value: -10, to: Date())!)
+        store.setMode(.period)
+        XCTAssertNotNil(store.prediction, "Period mode forecasts a cycle")
+        store.setMode(.noPeriod)
+        XCTAssertNil(store.prediction, "Track-without-period must not fake a forecast")
+    }
+
+    func testLockedModeIsRejected() {
+        let store = CycleStore()
+        store.setMode(.pregnancy)
+        XCTAssertEqual(store.mode, .period, "Locked modes are not selectable")
+        XCTAssertFalse(TrackingMode.pregnancy.isFunctional)
+        XCTAssertFalse(TrackingMode.perimenopause.isFunctional)
+        XCTAssertTrue(TrackingMode.conceive.isFunctional)
     }
 }
 

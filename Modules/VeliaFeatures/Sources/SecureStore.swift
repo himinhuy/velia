@@ -12,6 +12,9 @@ public struct PersistedState: Codable {
     public var segmentRaw: String
     public var periodDays: [PeriodRecord]
     public var symptoms: [SymptomRecord]
+    /// Optional for migration: pre-mode states decode to nil → default .period.
+    public var modeRaw: String?
+    public var fertility: [FertilityRecord]?
 }
 
 /// Persistence boundary so tests/previews can run without touching the Keychain or disk.
