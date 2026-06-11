@@ -92,16 +92,13 @@ struct CalendarView: View {
 
     /// Colour key so the bands are self-explanatory — covers the four cycle phases.
     private var legend: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 14) {
-                swatch(Theme.accent, L2("Kỳ kinh", "Period"))
-                swatch(Theme.follicular.opacity(0.5), L2("Nang trứng", "Follicular"))
-                swatch(Theme.fertile.opacity(0.75), L2("Dễ thụ thai", "Fertile"))
-                swatch(Theme.luteal.opacity(0.5), L2("Hoàng thể", "Luteal"))
-            }
-            .padding(.horizontal)
+        HStack(spacing: 14) {
+            swatch(Theme.accent, L2("Kỳ kinh", "Period"))
+            swatch(Theme.accent.opacity(0.4), L2("Dự đoán", "Predicted"))
+            swatch(Theme.fertile.opacity(0.75), L2("Dễ thụ thai", "Fertile"))
         }
         .font(.caption2)
+        .frame(maxWidth: .infinity)
         .padding(.vertical, 6)
     }
 
@@ -185,16 +182,6 @@ struct CalendarView: View {
                 topLeadingRadius: s.runStart ? 16 : 0, bottomLeadingRadius: s.runStart ? 16 : 0,
                 bottomTrailingRadius: s.runEnd ? 16 : 0, topTrailingRadius: s.runEnd ? 16 : 0
             ).fill(Theme.fertile.opacity(0.75))
-        } else if s.follicular {
-            UnevenRoundedRectangle(
-                topLeadingRadius: s.runStart ? 16 : 0, bottomLeadingRadius: s.runStart ? 16 : 0,
-                bottomTrailingRadius: s.runEnd ? 16 : 0, topTrailingRadius: s.runEnd ? 16 : 0
-            ).fill(Theme.follicular.opacity(0.5))
-        } else if s.luteal {
-            UnevenRoundedRectangle(
-                topLeadingRadius: s.runStart ? 16 : 0, bottomLeadingRadius: s.runStart ? 16 : 0,
-                bottomTrailingRadius: s.runEnd ? 16 : 0, topTrailingRadius: s.runEnd ? 16 : 0
-            ).fill(Theme.luteal.opacity(0.5))
         } else {
             Color.clear
         }
@@ -206,8 +193,6 @@ struct CalendarView: View {
         var period = false
         var predictedPeriod = false
         var fertile = false
-        var follicular = false
-        var luteal = false
         var ovulation = false
         var today = false
         var hasLog = false
@@ -248,16 +233,6 @@ struct CalendarView: View {
             s.runEnd = !inInterval(next, ov)
             if let od = m.ovulationDay, cal.isDate(day, inSameDayAs: od) { s.ovulation = true }
             return s
-        } else if inRange(day, m.follicular) {
-            s.follicular = true
-            s.runStart = !inRange(prev, m.follicular)
-            s.runEnd = !inRange(next, m.follicular)
-            return s
-        } else if inRange(day, m.luteal) {
-            s.luteal = true
-            s.runStart = !inRange(prev, m.luteal)
-            s.runEnd = !inRange(next, m.luteal)
-            return s
         } else {
             return s
         }
@@ -287,8 +262,6 @@ struct CalendarView: View {
         var nextPeriod: ClosedRange<Date>?         // predicted next period, period-length band
         var fertile: DateInterval?
         var ovulationDay: Date?
-        var follicular: ClosedRange<Date>?         // after period, before fertile
-        var luteal: ClosedRange<Date>?             // after fertile, before next period
     }
 
     private func makeModel() -> CalModel {
@@ -315,26 +288,14 @@ struct CalendarView: View {
 
         if let ov = p.ovulation {
             // A fixed ~6-day fertile window around the predicted ovulation day (the biological
-            // fertile window), NOT the engine's wide uncertainty interval — otherwise it swallows
-            // the follicular phase. Prediction uncertainty is still conveyed on the Today screen.
+            // fertile window), NOT the engine's wide uncertainty interval. Prediction uncertainty
+            // is still conveyed on the Today screen (range + confidence).
             let ovDay = cal.startOfDay(for: Date(timeIntervalSince1970:
                 (ov.start.timeIntervalSince1970 + ov.end.timeIntervalSince1970) / 2))
             m.ovulationDay = ovDay
             let fStart = cal.date(byAdding: .day, value: -4, to: ovDay)!   // 5 days up to ovulation
             let fEnd = cal.date(byAdding: .day, value: 1, to: ovDay)!      // + the day after
             m.fertile = DateInterval(start: fStart, end: cal.date(byAdding: .day, value: 1, to: fEnd)!)
-
-            // Follicular: between the current period's end and the fertile window.
-            if let lastRun = store.periodRuns().last {
-                let periodEnd = cal.date(byAdding: .day, value: periodLen - 1, to: lastRun.lowerBound)!
-                let folStart = cal.date(byAdding: .day, value: 1, to: periodEnd)!
-                let folEnd = cal.date(byAdding: .day, value: -1, to: fStart)!
-                if folEnd >= folStart { m.follicular = folStart...folEnd }
-            }
-            // Luteal: between the fertile window and the next predicted period.
-            let lutStart = cal.date(byAdding: .day, value: 1, to: fEnd)!
-            let lutEnd = cal.date(byAdding: .day, value: -1, to: start)!
-            if lutEnd >= lutStart { m.luteal = lutStart...lutEnd }
         }
         return m
     }
