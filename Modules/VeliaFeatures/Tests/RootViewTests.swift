@@ -103,6 +103,25 @@ final class RootViewTests: XCTestCase {
         XCTAssertNil(store.prediction, "Track-without-period must not fake a forecast")
     }
 
+    func testExclusiveSymptomAndNote() {
+        let store = CycleStore()
+        let day = Date()
+        store.selectExclusiveSymptom(TrackCatalog.energyCategory, "high", on: day)
+        XCTAssertTrue(store.isSymptomSelected(TrackCatalog.energyCategory, "high", on: day))
+        // Choosing another clears the first (single-choice).
+        store.selectExclusiveSymptom(TrackCatalog.energyCategory, "low", on: day)
+        XCTAssertFalse(store.isSymptomSelected(TrackCatalog.energyCategory, "high", on: day))
+        XCTAssertTrue(store.isSymptomSelected(TrackCatalog.energyCategory, "low", on: day))
+        // Re-tapping the selected one clears it.
+        store.selectExclusiveSymptom(TrackCatalog.energyCategory, "low", on: day)
+        XCTAssertFalse(store.isSymptomSelected(TrackCatalog.energyCategory, "low", on: day))
+
+        store.setNote("nhức đầu nhẹ", on: day)
+        XCTAssertEqual(store.note(on: day), "nhức đầu nhẹ")
+        store.setNote("   ", on: day)
+        XCTAssertEqual(store.note(on: day), "", "Blank note is cleared")
+    }
+
     func testLockLogic() {
         let lock = LockManager()
         lock.isEnabled = true

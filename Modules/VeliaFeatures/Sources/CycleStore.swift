@@ -225,6 +225,38 @@ public final class CycleStore {
         persist()
     }
 
+    /// Single-choice categories (energy, sleep, sex): selecting one clears the others in that
+    /// category on the same day. Tapping the selected one again clears it.
+    public func selectExclusiveSymptom(_ category: String, _ id: String, on day: Date) {
+        let target = cal.startOfDay(for: day)
+        let already = isSymptomSelected(category, id, on: day)
+        symptoms.removeAll { $0.type == category && cal.isDate($0.date, inSameDayAs: target) }
+        if !already {
+            symptoms.append(SymptomRecord(sync: SyncMetadata(deviceID: deviceID),
+                                          date: target, type: category, value: 1, note: id))
+        }
+        persist()
+    }
+
+    /// Free-text note for a day, stored as a `SymptomRecord(type: "note")`.
+    public func note(on day: Date) -> String {
+        let target = cal.startOfDay(for: day)
+        return symptoms.first {
+            $0.type == "note" && cal.isDate($0.date, inSameDayAs: target)
+        }?.note ?? ""
+    }
+
+    public func setNote(_ text: String, on day: Date) {
+        let target = cal.startOfDay(for: day)
+        symptoms.removeAll { $0.type == "note" && cal.isDate($0.date, inSameDayAs: target) }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            symptoms.append(SymptomRecord(sync: SyncMetadata(deviceID: deviceID),
+                                          date: target, type: "note", value: 0, note: trimmed))
+        }
+        persist()
+    }
+
     /// Whether any data (period or symptom) is logged on a day — for calendar dots.
     public func hasAnyLog(on day: Date) -> Bool {
         let target = cal.startOfDay(for: day)

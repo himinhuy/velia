@@ -22,6 +22,10 @@ struct TrackSheet: View {
                         if store.mode == .conceive { fertilitySection }
                         symptomSection("Cảm xúc", category: TrackCatalog.feelingCategory, items: TrackCatalog.feelings)
                         symptomSection("Cơn đau", category: TrackCatalog.painCategory, items: TrackCatalog.pains)
+                        exclusiveSection("Năng lượng", category: TrackCatalog.energyCategory, items: TrackCatalog.energy)
+                        exclusiveSection("Giấc ngủ", category: TrackCatalog.sleepCategory, items: TrackCatalog.sleep)
+                        exclusiveSection("Quan hệ", category: TrackCatalog.sexCategory, items: TrackCatalog.sex)
+                        noteField
                     }
                     .padding()
                     .padding(.bottom, 80)
@@ -176,17 +180,43 @@ struct TrackSheet: View {
             pickerRow("Que thử LH", options: lhOptions,
                       selected: entry()?.lhTest) { writeLH($0) }
 
-            HStack {
-                TrackTile(symbol: "heart.circle.fill", label: "Quan hệ", tint: Theme.accent,
-                          selected: store.isSymptomSelected("intimacy", "logged", on: selectedDate)) {
-                    store.toggleSymptom("intimacy", "logged", on: selectedDate)
-                }
-                .frame(width: 100)
-                Spacer()
-            }
-
             Text("Velia không phải công cụ tránh thai hay chẩn đoán y khoa. Hãy tham khảo ý kiến bác sĩ.")
                 .font(.caption2).foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: Single-choice categories (energy / sleep / sex)
+
+    private func exclusiveSection(_ title: String, category: String, items: [TrackItem]) -> some View {
+        VStack(alignment: .leading, spacing: Theme.spacing) {
+            sectionHeader(title)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
+                ForEach(items) { item in
+                    TrackTile(
+                        symbol: item.symbol,
+                        label: item.label,
+                        tint: tint(item.color),
+                        selected: store.isSymptomSelected(category, item.id, on: selectedDate)
+                    ) {
+                        store.selectExclusiveSymptom(category, item.id, on: selectedDate)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: Daily note
+
+    private var noteField: some View {
+        VStack(alignment: .leading, spacing: Theme.spacing) {
+            sectionHeader("Ghi chú")
+            TextField("Điều gì đáng nhớ hôm nay?…", text: Binding(
+                get: { store.note(on: selectedDate) },
+                set: { store.setNote($0, on: selectedDate) }
+            ), axis: .vertical)
+            .lineLimit(2...5)
+            .padding()
+            .background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
         }
     }
 

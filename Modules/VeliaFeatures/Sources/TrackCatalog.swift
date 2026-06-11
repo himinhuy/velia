@@ -14,6 +14,29 @@ enum TrackColor { case rose, amber, blue, teal }
 enum TrackCatalog {
     static let feelingCategory = "feeling"
     static let painCategory = "pain"
+    static let energyCategory = "energy"   // single-choice
+    static let sleepCategory = "sleep"     // single-choice
+    static let sexCategory = "sex"         // single-choice
+
+    /// Single-choice: one energy level per day.
+    static let energy: [TrackItem] = [
+        TrackItem(id: "high", label: "Tràn đầy", symbol: "bolt.fill", color: .teal),
+        TrackItem(id: "ok", label: "Bình thường", symbol: "equal.circle.fill", color: .teal),
+        TrackItem(id: "low", label: "Uể oải", symbol: "battery.25", color: .teal),
+    ]
+
+    /// Single-choice: sleep quality.
+    static let sleep: [TrackItem] = [
+        TrackItem(id: "good", label: "Ngon giấc", symbol: "moon.stars.fill", color: .blue),
+        TrackItem(id: "ok", label: "Tạm ổn", symbol: "moon.fill", color: .blue),
+        TrackItem(id: "poor", label: "Khó ngủ", symbol: "moon.zzz.fill", color: .blue),
+    ]
+
+    /// Single-choice: intercourse (Tier-1 neutral).
+    static let sex: [TrackItem] = [
+        TrackItem(id: "protected", label: "Có bảo vệ", symbol: "shield.fill", color: .rose),
+        TrackItem(id: "unprotected", label: "Không bảo vệ", symbol: "heart.fill", color: .rose),
+    ]
 
     static let feelings: [TrackItem] = [
         TrackItem(id: "happy", label: "Vui vẻ", symbol: "sun.max.fill", color: .amber),
