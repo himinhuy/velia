@@ -186,15 +186,18 @@ struct CycleRingModel {
         // Period length as set by the user (used for the red arc + "N more days" copy).
         let periodLength = min(max(store.typicalPeriodLength, 1), 10)
 
-        // Ovulation as a day-of-cycle range.
+        // A fixed ~6-day fertile window around the predicted ovulation DAY (not the engine's wide
+        // uncertainty interval — that would swallow the follicular/luteal arcs).
         var ovDay: Int?
         var ovRange: ClosedRange<Int>?
         if let ov = prediction.ovulation {
-            let lo = Int(DayMath.daysBetween(lastStart, ov.start).rounded()) + 1
-            let hi = Int(DayMath.daysBetween(lastStart, ov.end).rounded()) + 1
-            let clo = min(max(lo, 1), cycleLength), chi = min(max(hi, 1), cycleLength)
-            ovRange = min(clo, chi)...max(clo, chi)
-            ovDay = (clo + chi) / 2
+            let mid = Date(timeIntervalSince1970:
+                (ov.start.timeIntervalSince1970 + ov.end.timeIntervalSince1970) / 2)
+            let center = Int(DayMath.daysBetween(lastStart, mid).rounded()) + 1
+            let lo = min(max(center - 4, periodLength + 1), cycleLength) // 5 days up to ovulation
+            let hi = min(max(center + 1, lo), cycleLength)               // + the day after
+            ovRange = lo...hi
+            ovDay = min(max(center, lo), hi)
         }
 
         return CycleRingModel(

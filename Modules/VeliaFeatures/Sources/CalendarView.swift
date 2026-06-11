@@ -314,19 +314,25 @@ struct CalendarView: View {
         m.nextPeriod = start...end
 
         if let ov = p.ovulation {
-            m.fertile = ov
-            m.ovulationDay = cal.startOfDay(for: Date(timeIntervalSince1970:
+            // A fixed ~6-day fertile window around the predicted ovulation day (the biological
+            // fertile window), NOT the engine's wide uncertainty interval — otherwise it swallows
+            // the follicular phase. Prediction uncertainty is still conveyed on the Today screen.
+            let ovDay = cal.startOfDay(for: Date(timeIntervalSince1970:
                 (ov.start.timeIntervalSince1970 + ov.end.timeIntervalSince1970) / 2))
+            m.ovulationDay = ovDay
+            let fStart = cal.date(byAdding: .day, value: -4, to: ovDay)!   // 5 days up to ovulation
+            let fEnd = cal.date(byAdding: .day, value: 1, to: ovDay)!      // + the day after
+            m.fertile = DateInterval(start: fStart, end: cal.date(byAdding: .day, value: 1, to: fEnd)!)
 
             // Follicular: between the current period's end and the fertile window.
             if let lastRun = store.periodRuns().last {
                 let periodEnd = cal.date(byAdding: .day, value: periodLen - 1, to: lastRun.lowerBound)!
                 let folStart = cal.date(byAdding: .day, value: 1, to: periodEnd)!
-                let folEnd = cal.date(byAdding: .day, value: -1, to: cal.startOfDay(for: ov.start))!
+                let folEnd = cal.date(byAdding: .day, value: -1, to: fStart)!
                 if folEnd >= folStart { m.follicular = folStart...folEnd }
             }
             // Luteal: between the fertile window and the next predicted period.
-            let lutStart = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: ov.end))!
+            let lutStart = cal.date(byAdding: .day, value: 1, to: fEnd)!
             let lutEnd = cal.date(byAdding: .day, value: -1, to: start)!
             if lutEnd >= lutStart { m.luteal = lutStart...lutEnd }
         }
