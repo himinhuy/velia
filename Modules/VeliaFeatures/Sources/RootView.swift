@@ -9,6 +9,7 @@ public struct RootView: View {
     @State private var profiles: ProfileStore
     @State private var lock = LockManager()
     @State private var lang = LanguageManager()
+    @State private var reminders = ReminderManager()
     @State private var tab: Tab = .cycle
     /// Non-nil while the Track sheet is open, holding the day being logged.
     @State private var trackDate: Date?
@@ -42,6 +43,10 @@ public struct RootView: View {
         .environment(lock)
         .environment(lang)
         .environment(profiles)
+        .environment(reminders)
+        .task(id: profiles.activeID) {
+            if let store = profiles.current { await reminders.apply(store: store) }
+        }
         .id(lang.language) // rebuild the tree so every L2(...) re-evaluates on language switch
         .task { await lock.authenticate() }
         .onChange(of: scenePhase) { _, phase in
@@ -69,7 +74,9 @@ public struct RootView: View {
         .sheet(item: Binding(
             get: { trackDate.map { IdentifiableDate(date: $0) } },
             set: { trackDate = $0?.date }
-        )) { wrapper in
+        ), onDismiss: {
+            Task { await reminders.apply(store: store) } // logging may have changed the prediction
+        }) { wrapper in
             TrackSheet(store: store, selectedDate: wrapper.date)
         }
     }

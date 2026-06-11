@@ -9,6 +9,7 @@ struct ProfileView: View {
     @Environment(LockManager.self) private var lock
     @Environment(LanguageManager.self) private var lang
     @Environment(ProfileStore.self) private var profiles
+    @Environment(ReminderManager.self) private var reminders
     @Environment(\.dismiss) private var dismiss
 
     @State private var cycleLength: Int
@@ -27,6 +28,14 @@ struct ProfileView: View {
         _segment = State(initialValue: store.profile.segment)
         _includeAge = State(initialValue: store.profile.birthYear != nil)
         _birthYear = State(initialValue: store.profile.birthYear ?? 1995)
+    }
+
+    /// Binding that writes a reminder setting and reschedules notifications.
+    private func reminderBinding<T>(_ keyPath: ReferenceWritableKeyPath<ReminderManager, T>) -> Binding<T> {
+        Binding(
+            get: { reminders[keyPath: keyPath] },
+            set: { reminders[keyPath: keyPath] = $0; Task { await reminders.apply(store: store) } }
+        )
     }
 
     var body: some View {
@@ -97,6 +106,30 @@ struct ProfileView: View {
                     .labelsHidden()
                 } header: {
                     Text(L2("Ngôn ngữ", "Language"))
+                }
+
+                Section {
+                    Toggle(L2("Nhắc kỳ kinh sắp tới", "Upcoming period reminder"),
+                           isOn: reminderBinding(\.periodReminderEnabled))
+                    if reminders.periodReminderEnabled {
+                        Stepper(L2("Báo trước \(reminders.periodLeadDays) ngày", "\(reminders.periodLeadDays) days before"),
+                                value: reminderBinding(\.periodLeadDays), in: 0...5)
+                    }
+                    if store.mode == .conceive {
+                        Toggle(L2("Nhắc cửa sổ dễ thụ thai", "Fertile window reminder"),
+                               isOn: reminderBinding(\.fertileReminderEnabled))
+                    }
+                    Toggle(L2("Nhắc ghi nhật ký hằng ngày", "Daily log reminder"),
+                           isOn: reminderBinding(\.logNudgeEnabled))
+                    if reminders.logNudgeEnabled {
+                        Stepper(L2("Lúc \(reminders.logNudgeHour) giờ", "At \(reminders.logNudgeHour):00"),
+                                value: reminderBinding(\.logNudgeHour), in: 6...23)
+                    }
+                } header: {
+                    Text(L2("Nhắc nhở", "Reminders"))
+                } footer: {
+                    Text(L2("Thông báo cục bộ trên máy — không gửi đi đâu cả.",
+                            "Local notifications on this device — nothing is sent anywhere."))
                 }
 
                 Section {
