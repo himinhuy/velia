@@ -16,7 +16,7 @@ struct LockScreenView: View {
                     .foregroundStyle(Theme.accent)
                 Text("Velia")
                     .font(.largeTitle.bold())
-                Text("Riêng tư, của riêng bạn.")
+                Text(L2("Riêng tư, của riêng bạn.", "Private, yours alone."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()

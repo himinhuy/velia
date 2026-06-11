@@ -41,7 +41,7 @@ struct ModePickerView: View {
             Button {
                 if let selection, selection.isFunctional { onConfirm(selection) }
             } label: {
-                Text(isOnboarding ? "Tiếp tục" : "Đổi chế độ")
+                Text(isOnboarding ? L2("Tiếp tục", "Continue") : L2("Đổi chế độ", "Switch mode"))
                     .frame(maxWidth: .infinity).padding(.vertical, 4)
             }
             .buttonStyle(.borderedProminent)
@@ -62,8 +62,8 @@ struct ModePickerView: View {
                 }
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text("Velia có thể giúp gì cho bạn?").font(.title3.bold())
-                Text("Bạn có thể thay đổi bất cứ lúc nào.").font(.subheadline).foregroundStyle(.secondary)
+                Text(L2("Velia có thể giúp gì cho bạn?", "What can we help you do?")).font(.title3.bold())
+                Text(L2("Bạn có thể thay đổi bất cứ lúc nào.", "You can change this anytime.")).font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()
         }
@@ -83,7 +83,7 @@ struct ModePickerView: View {
                         .foregroundStyle(selected ? .white : .primary)
                     if !mode.isFunctional {
                         Spacer()
-                        Label("Sắp ra mắt", systemImage: "lock.fill")
+                        Label(L2("Sắp ra mắt", "Coming soon"), systemImage: "lock.fill")
                             .font(.caption2.weight(.semibold))
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .background(Color(.tertiarySystemBackground), in: Capsule())

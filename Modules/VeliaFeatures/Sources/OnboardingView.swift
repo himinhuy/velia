@@ -34,37 +34,40 @@ struct OnboardingView: View {
         NavigationStack {
             Form {
                 Section {
-                    Text("Chào mừng đến với Velia")
+                    Text(L2("Chào mừng đến với Velia", "Welcome to Velia"))
                         .font(.title2.bold())
-                    Text("Vài câu hỏi nhanh để Velia hữu ích ngay từ hôm nay. Bạn luôn có thể chỉnh lại sau.")
+                    Text(L2("Vài câu hỏi nhanh để Velia hữu ích ngay từ hôm nay. Bạn luôn có thể chỉnh lại sau.",
+                            "A few quick questions so Velia is useful from day one. You can change these anytime."))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
 
                 if asksCycle {
-                    Section("Kỳ kinh gần nhất") {
-                        Toggle("Tôi nhớ ngày bắt đầu", isOn: $knowsLastPeriod)
+                    Section(L2("Kỳ kinh gần nhất", "Last period")) {
+                        Toggle(L2("Tôi nhớ ngày bắt đầu", "I remember the start date"), isOn: $knowsLastPeriod)
                         if knowsLastPeriod {
-                            DatePicker("Ngày bắt đầu", selection: $lastPeriod,
+                            DatePicker(L2("Ngày bắt đầu", "Start date"), selection: $lastPeriod,
                                        in: ...Date(), displayedComponents: .date)
                         }
                     }
 
-                    Section("Độ dài chu kỳ thường gặp") {
-                        Stepper("\(cycleLength) ngày", value: $cycleLength, in: 18...60)
-                        Text("Khoảng cách giữa hai lần bắt đầu kỳ kinh. Mặc định 28 ngày.")
+                    Section(L2("Độ dài chu kỳ thường gặp", "Typical cycle length")) {
+                        Stepper(L2("\(cycleLength) ngày", "\(cycleLength) days"), value: $cycleLength, in: 18...60)
+                        Text(L2("Khoảng cách giữa hai lần bắt đầu kỳ kinh. Mặc định 28 ngày.",
+                                "The gap between two period starts. Default is 28 days."))
                             .font(.caption).foregroundStyle(.secondary)
                     }
 
-                    Section("Số ngày hành kinh") {
-                        Stepper("\(periodLength) ngày", value: $periodLength, in: 1...10)
-                        Text("Kỳ kinh của bạn thường kéo dài bao nhiêu ngày (thường 2–6 ngày).")
+                    Section(L2("Số ngày hành kinh", "Period length")) {
+                        Stepper(L2("\(periodLength) ngày", "\(periodLength) days"), value: $periodLength, in: 1...10)
+                        Text(L2("Kỳ kinh của bạn thường kéo dài bao nhiêu ngày (thường 2–6 ngày).",
+                                "How many days your period usually lasts (typically 2–6 days)."))
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
 
-                Section("Tình trạng của bạn") {
-                    Picker("Phân nhóm", selection: $segment) {
+                Section(L2("Tình trạng của bạn", "Your situation")) {
+                    Picker(L2("Phân nhóm", "Group"), selection: $segment) {
                         ForEach(Segment.allCases, id: \.self) { Text(L.segment($0)).tag($0) }
                     }
                     .pickerStyle(.inline)
@@ -72,19 +75,20 @@ struct OnboardingView: View {
                 }
 
                 Section {
-                    Toggle("Thêm năm sinh (tùy chọn)", isOn: $includeAge)
+                    Toggle(L2("Thêm năm sinh (tùy chọn)", "Add birth year (optional)"), isOn: $includeAge)
                     if includeAge {
-                        Picker("Năm sinh", selection: $birthYear) {
+                        Picker(L2("Năm sinh", "Birth year"), selection: $birthYear) {
                             ForEach(years, id: \.self) { Text(String($0)).tag($0) }
                         }
                     }
                 } footer: {
-                    Text("Tuổi giúp tinh chỉnh dự đoán. Dữ liệu chỉ ở trên máy của bạn.")
+                    Text(L2("Tuổi giúp tinh chỉnh dự đoán. Dữ liệu chỉ ở trên máy của bạn.",
+                            "Age helps refine predictions. Your data stays on this device."))
                 }
 
                 Section {
                     Button { finish() } label: {
-                        Text("Bắt đầu").frame(maxWidth: .infinity)
+                        Text(L2("Bắt đầu", "Get started")).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(Theme.accent)
@@ -96,7 +100,7 @@ struct OnboardingView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { mode = nil } label: { Label("Chế độ", systemImage: "chevron.left") }
+                    Button { mode = nil } label: { Label(L2("Chế độ", "Mode"), systemImage: "chevron.left") }
                         .tint(Theme.accent)
                 }
             }

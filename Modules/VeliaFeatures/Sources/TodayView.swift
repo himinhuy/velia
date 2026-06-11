@@ -38,18 +38,18 @@ struct TodayView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button { showModePicker = true } label: {
-                            Label("Đổi chế độ", systemImage: "arrow.triangle.2.circlepath")
+                            Label(L2("Đổi chế độ", "Switch mode"), systemImage: "arrow.triangle.2.circlepath")
                         }
                         Button { showProfile = true } label: {
-                            Label("Hồ sơ & độ dài chu kỳ", systemImage: "person.crop.circle")
+                            Label(L2("Hồ sơ & độ dài chu kỳ", "Profile & cycle length"), systemImage: "person.crop.circle")
                         }
                         Button { trackDate = Calendar.current.startOfDay(for: Date()) } label: {
-                            Label("Ghi nhật ký hôm nay", systemImage: "plus.circle")
+                            Label(L2("Ghi nhật ký hôm nay", "Log today"), systemImage: "plus.circle")
                         }
                         if lock.isEnabled {
                             Divider()
                             Button { lock.lock() } label: {
-                                Label("Khóa ngay", systemImage: "lock.fill")
+                                Label(L2("Khóa ngay", "Lock now"), systemImage: "lock.fill")
                             }
                         }
                     } label: {
@@ -68,7 +68,7 @@ struct TodayView: View {
     }
 
     private var navTitle: String {
-        store.mode == .conceive ? "Chu kỳ của bạn" : (store.mode.predictsCycle ? "Chu kỳ của bạn" : "Hôm nay")
+        store.mode.predictsCycle ? L2("Chu kỳ của bạn", "Your cycle") : L2("Hôm nay", "Today")
     }
 
     // MARK: Cycle-length pill
@@ -76,8 +76,8 @@ struct TodayView: View {
     private var cycleLengthPill: some View {
         Button { showProfile = true } label: {
             HStack(spacing: 6) {
-                Text("Độ dài chu kỳ:").foregroundStyle(.secondary)
-                Text("\(store.profile.typicalCycleLength ?? 28) ngày")
+                Text(L2("Độ dài chu kỳ:", "Cycle length:")).foregroundStyle(.secondary)
+                Text(L2("\(store.profile.typicalCycleLength ?? 28) ngày", "\(store.profile.typicalCycleLength ?? 28) days"))
                     .fontWeight(.semibold).foregroundStyle(Theme.accent)
                 Image(systemName: "chevron.down").font(.caption2).foregroundStyle(Theme.accent)
             }
@@ -94,13 +94,15 @@ struct TodayView: View {
     private var fertileCard: some View {
         if let ov = store.prediction?.ovulation {
             VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-                Label("Cửa sổ dễ thụ thai", systemImage: "sparkles")
+                Label(L2("Cửa sổ dễ thụ thai", "Fertile window"), systemImage: "sparkles")
                     .font(.headline).foregroundStyle(Theme.fertile)
                 Text(Fmt.range(ov)).font(.title3.weight(.semibold))
-                Text("Ước tính độ tin cậy thấp khi chu kỳ chưa ổn định. Ghi thêm BBT, dịch nhầy và que thử LH để rõ hơn.")
+                Text(L2("Ước tính độ tin cậy thấp khi chu kỳ chưa ổn định. Ghi thêm BBT, dịch nhầy và que thử LH để rõ hơn.",
+                        "Low-confidence estimate while your cycle is still settling. Log BBT, cervical mucus and LH tests to sharpen it."))
                     .font(.caption).foregroundStyle(.secondary)
                 Divider()
-                Text("Velia không phải công cụ tránh thai hay chẩn đoán y khoa. Hãy tham khảo ý kiến bác sĩ.")
+                Text(L2("Velia không phải công cụ tránh thai hay chẩn đoán y khoa. Hãy tham khảo ý kiến bác sĩ.",
+                        "Velia is not a contraceptive or medical-diagnosis tool. Please consult a doctor."))
                     .font(.caption2).foregroundStyle(.secondary)
             }
             .veliaCard()
@@ -114,9 +116,10 @@ struct TodayView: View {
         let days: [Date] = (0..<14).compactMap { cal.date(byAdding: .day, value: -$0, to: Date()) }
             .filter { store.hasAnyLog(on: $0) }
         return VStack(alignment: .leading, spacing: Theme.spacing) {
-            Text("Nhật ký gần đây").font(.title3.bold())
+            Text(L2("Nhật ký gần đây", "Recent logs")).font(.title3.bold())
             if days.isEmpty {
-                Text("Chưa có gì được ghi. Nhấn “＋ Theo dõi” để bắt đầu.")
+                Text(L2("Chưa có gì được ghi. Nhấn “＋ Theo dõi” để bắt đầu.",
+                        "Nothing logged yet. Tap “＋ Track” to begin."))
                     .font(.subheadline).foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .veliaCard()
@@ -144,7 +147,7 @@ struct TodayView: View {
                 Image(systemName: "face.smiling")
                     .font(.title3).foregroundStyle(.white)
                     .padding(8).background(.orange, in: Circle())
-                Text("Hôm nay bạn cảm thấy thế nào?")
+                Text(L2("Hôm nay bạn cảm thấy thế nào?", "How do you feel today?"))
                     .font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
                 Spacer()
                 Image(systemName: "chevron.right").foregroundStyle(.secondary)

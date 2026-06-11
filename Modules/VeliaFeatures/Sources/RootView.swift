@@ -8,6 +8,7 @@ import VeliaDesignSystem
 public struct RootView: View {
     @State private var store: CycleStore
     @State private var lock = LockManager()
+    @State private var lang = LanguageManager()
     @State private var tab: Tab = .cycle
     /// Non-nil while the Track sheet is open, holding the day being logged.
     @State private var trackDate: Date?
@@ -35,6 +36,8 @@ public struct RootView: View {
             }
         }
         .environment(lock)
+        .environment(lang)
+        .id(lang.language) // rebuild the tree so every L2(...) re-evaluates on language switch
         .task { await lock.authenticate() }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
@@ -80,11 +83,11 @@ public struct RootView: View {
 
     private var tabBar: some View {
         HStack(spacing: 0) {
-            tabButton(.cycle, "Chu kỳ", "circle.dashed")
-            tabButton(.calendar, "Lịch", "calendar")
+            tabButton(.cycle, L2("Chu kỳ", "Cycle"), "circle.dashed")
+            tabButton(.calendar, L2("Lịch", "Calendar"), "calendar")
             trackTab
-            tabButton(.analysis, "Phân tích", "chart.bar.doc.horizontal")
-            tabButton(.content, "Nội dung", "book")
+            tabButton(.analysis, L2("Phân tích", "Analysis"), "chart.bar.doc.horizontal")
+            tabButton(.content, L2("Nội dung", "Content"), "book")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
@@ -118,7 +121,7 @@ public struct RootView: View {
                     .foregroundStyle(.white)
                     .frame(width: 46, height: 34)
                     .background(Theme.accent, in: Capsule())
-                Text("Theo dõi").font(.system(size: 10)).foregroundStyle(Theme.accent)
+                Text(L2("Theo dõi", "Track")).font(.system(size: 10)).foregroundStyle(Theme.accent)
             }
             .frame(maxWidth: .infinity)
         }

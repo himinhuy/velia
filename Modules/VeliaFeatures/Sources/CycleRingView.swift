@@ -81,7 +81,7 @@ struct CycleRingView: View {
 
     private var currentDayMarker: some View {
         VStack(spacing: 0) {
-            Text("Ngày").font(.system(size: 9)).foregroundStyle(.secondary)
+            Text(L2("Ngày", "Day")).font(.system(size: 9)).foregroundStyle(.secondary)
             Text("\(model.currentDay)").font(.system(size: 17, weight: .bold))
         }
         .frame(width: 46, height: 46)
@@ -95,20 +95,20 @@ struct CycleRingView: View {
     private var centerText: some View {
         VStack(spacing: 6) {
             if model.hasData {
-                (Text("Hôm nay").bold() + Text(", \(model.todayString)"))
+                (Text(L2("Hôm nay", "Today")).bold() + Text(", \(model.todayString)"))
                     .font(.subheadline)
                     .foregroundStyle(.primary)
                 Text(model.headline)
                     .font(.system(.title, design: .rounded).weight(.bold))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Giai đoạn \(model.phaseName.lowercased())")
+                Text(model.phaseName)
                     .font(.subheadline)
                     .foregroundStyle(fertileColor)
             } else {
-                Text("Chưa có dữ liệu")
+                Text(L2("Chưa có dữ liệu", "No data yet"))
                     .font(.headline)
-                Text("Ghi kỳ kinh để xem chu kỳ của bạn")
+                Text(L2("Ghi kỳ kinh để xem chu kỳ của bạn", "Log a period to see your cycle"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -145,13 +145,14 @@ struct CycleRingModel {
     var headline: String {
         if currentDay <= periodLength {
             let more = periodLength - currentDay
-            if more <= 0 { return "Ngày cuối của kỳ kinh" }
-            return "Còn \(more) ngày hành kinh"
+            if more <= 0 { return L2("Ngày cuối của kỳ kinh", "Last day of your period") }
+            return L2("Còn \(more) ngày hành kinh", "\(more) more days of your period")
         }
         switch daysUntilNextPeriod {
-        case 0: return "Kỳ kinh dự kiến hôm nay"
-        case 1: return "Còn 1 ngày đến kỳ kinh"
-        default: return "Còn \(daysUntilNextPeriod) ngày đến kỳ kinh"
+        case 0: return L2("Kỳ kinh dự kiến hôm nay", "Period expected today")
+        case 1: return L2("Còn 1 ngày đến kỳ kinh", "1 day until your next period")
+        default: return L2("Còn \(daysUntilNextPeriod) ngày đến kỳ kinh",
+                           "\(daysUntilNextPeriod) days until your next period")
         }
     }
 

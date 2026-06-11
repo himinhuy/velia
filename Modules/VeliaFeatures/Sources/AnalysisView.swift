@@ -13,9 +13,10 @@ struct AnalysisView: View {
                     let lengths = store.observedCycleLengths
                     if lengths.isEmpty {
                         ContentUnavailableView(
-                            "Chưa đủ dữ liệu",
+                            L2("Chưa đủ dữ liệu", "Not enough data"),
                             systemImage: "chart.bar.xaxis",
-                            description: Text("Ghi ít nhất hai kỳ kinh để Velia phân tích chu kỳ của bạn.")
+                            description: Text(L2("Ghi ít nhất hai kỳ kinh để Velia phân tích chu kỳ của bạn.",
+                                                 "Log at least two periods for Velia to analyse your cycle."))
                         )
                         .padding(.top, 60)
                     } else {
@@ -26,17 +27,17 @@ struct AnalysisView: View {
                 .padding()
             }
             .background(Theme.screen)
-            .navigationTitle("Phân tích")
+            .navigationTitle(L2("Phân tích", "Analysis"))
         }
     }
 
     private func statsGrid(_ lengths: [Int]) -> some View {
         let avg = store.averageCycleLength ?? 0
         return LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.spacing) {
-            stat("Trung bình", "\(avg)", "ngày")
-            stat("Số chu kỳ", "\(lengths.count)", "đã ghi")
-            stat("Ngắn nhất", "\(lengths.min() ?? 0)", "ngày")
-            stat("Dài nhất", "\(lengths.max() ?? 0)", "ngày")
+            stat(L2("Trung bình", "Average"), "\(avg)", L2("ngày", "days"))
+            stat(L2("Số chu kỳ", "Cycles"), "\(lengths.count)", L2("đã ghi", "logged"))
+            stat(L2("Ngắn nhất", "Shortest"), "\(lengths.min() ?? 0)", L2("ngày", "days"))
+            stat(L2("Dài nhất", "Longest"), "\(lengths.max() ?? 0)", L2("ngày", "days"))
         }
     }
 
@@ -55,14 +56,16 @@ struct AnalysisView: View {
         let spread = (lengths.max() ?? 0) - (lengths.min() ?? 0)
         let label: String
         switch spread {
-        case 0...3: label = "Chu kỳ của bạn khá đều."
-        case 4...7: label = "Chu kỳ dao động vừa phải."
-        default: label = "Chu kỳ khá thất thường — Velia sẽ giữ khoảng dự đoán rộng cho trung thực."
+        case 0...3: label = L2("Chu kỳ của bạn khá đều.", "Your cycle is fairly regular.")
+        case 4...7: label = L2("Chu kỳ dao động vừa phải.", "Your cycle varies moderately.")
+        default: label = L2("Chu kỳ khá thất thường — Velia sẽ giữ khoảng dự đoán rộng cho trung thực.",
+                            "Your cycle is quite irregular — Velia keeps a wider prediction range to stay honest.")
         }
         return VStack(alignment: .leading, spacing: Theme.spacingSmall) {
-            Label("Mức dao động", systemImage: "waveform.path.ecg")
+            Label(L2("Mức dao động", "Variability"), systemImage: "waveform.path.ecg")
                 .font(.headline).foregroundStyle(Theme.accent)
-            Text("Chênh lệch \(spread) ngày giữa chu kỳ ngắn nhất và dài nhất.")
+            Text(L2("Chênh lệch \(spread) ngày giữa chu kỳ ngắn nhất và dài nhất.",
+                    "\(spread) days between your shortest and longest cycle."))
                 .font(.subheadline)
             Text(label).font(.caption).foregroundStyle(.secondary)
         }
@@ -75,12 +78,13 @@ struct ContentTabView: View {
     var body: some View {
         NavigationStack {
             ContentUnavailableView(
-                "Nội dung sắp ra mắt",
+                L2("Nội dung sắp ra mắt", "Content coming soon"),
                 systemImage: "book",
-                description: Text("Bài viết về sức khỏe chu kỳ bằng tiếng Việt sẽ có trong bản cập nhật sau.")
+                description: Text(L2("Bài viết về sức khỏe chu kỳ bằng tiếng Việt sẽ có trong bản cập nhật sau.",
+                                     "Vietnamese cycle-health articles are coming in a future update."))
             )
             .background(Theme.screen)
-            .navigationTitle("Nội dung")
+            .navigationTitle(L2("Nội dung", "Content"))
         }
     }
 }

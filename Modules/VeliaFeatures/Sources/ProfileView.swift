@@ -7,6 +7,7 @@ import VeliaDesignSystem
 struct ProfileView: View {
     let store: CycleStore
     @Environment(LockManager.self) private var lock
+    @Environment(LanguageManager.self) private var lang
     @Environment(\.dismiss) private var dismiss
 
     @State private var cycleLength: Int
@@ -31,78 +32,98 @@ struct ProfileView: View {
         NavigationStack {
             Form {
                 Section {
-                    Stepper("Độ dài chu kỳ trung bình: \(cycleLength) ngày",
+                    Stepper(L2("Độ dài chu kỳ trung bình: \(cycleLength) ngày",
+                               "Average cycle length: \(cycleLength) days"),
                             value: $cycleLength, in: 18...60)
-                    Stepper("Số ngày hành kinh: \(periodLength) ngày",
+                    Stepper(L2("Số ngày hành kinh: \(periodLength) ngày",
+                               "Period length: \(periodLength) days"),
                             value: $periodLength, in: 1...10)
                 } header: {
-                    Text("Chu kỳ")
+                    Text(L2("Chu kỳ", "Cycle"))
                 } footer: {
-                    Text("Độ dài chu kỳ = khoảng cách giữa hai lần bắt đầu kỳ kinh. Số ngày hành kinh = kỳ kinh kéo dài bao lâu (thường 2–6 ngày). Velia dùng các số này khi chưa đủ dữ liệu, rồi tự học từ nhật ký của bạn.")
+                    Text(L2("Độ dài chu kỳ = khoảng cách giữa hai lần bắt đầu kỳ kinh. Số ngày hành kinh = kỳ kinh kéo dài bao lâu (thường 2–6 ngày). Velia dùng các số này khi chưa đủ dữ liệu, rồi tự học từ nhật ký của bạn.",
+                            "Cycle length = the gap between two period starts. Period length = how long a period lasts (typically 2–6 days). Velia uses these until it has enough data, then learns from your logs."))
                 }
 
                 Section {
-                    Picker("Mức độ đều", selection: $segment) {
+                    Picker(L2("Mức độ đều", "Regularity"), selection: $segment) {
                         ForEach(Segment.allCases, id: \.self) { Text(L.segment($0)).tag($0) }
                     }
                     .pickerStyle(.inline)
                     .labelsHidden()
                 } header: {
-                    Text("Tình trạng chu kỳ")
+                    Text(L2("Tình trạng chu kỳ", "Cycle status"))
                 } footer: {
-                    Text("Chu kỳ càng thất thường, Velia càng để khoảng dự đoán rộng hơn cho trung thực.")
+                    Text(L2("Chu kỳ càng thất thường, Velia càng để khoảng dự đoán rộng hơn cho trung thực.",
+                            "The more irregular your cycle, the wider Velia keeps its prediction range — to stay honest."))
                 }
 
                 Section {
-                    Toggle("Thêm năm sinh", isOn: $includeAge)
+                    Toggle(L2("Thêm năm sinh", "Add birth year"), isOn: $includeAge)
                     if includeAge {
-                        Picker("Năm sinh", selection: $birthYear) {
+                        Picker(L2("Năm sinh", "Birth year"), selection: $birthYear) {
                             ForEach(years, id: \.self) { Text(String($0)).tag($0) }
                         }
                     }
                 } footer: {
-                    Text("Tùy chọn. Dữ liệu chỉ ở trên máy này — không tài khoản, không gửi đi đâu cả.")
+                    Text(L2("Tùy chọn. Dữ liệu chỉ ở trên máy này — không tài khoản, không gửi đi đâu cả.",
+                            "Optional. Your data stays on this device — no account, never sent anywhere."))
                 }
 
                 Section {
-                    Toggle("Khóa ứng dụng (Face ID / mật mã)", isOn: Binding(
+                    Picker(L2("Ngôn ngữ", "Language"), selection: Binding(
+                        get: { lang.language }, set: { lang.language = $0 }
+                    )) {
+                        ForEach(AppLanguage.allCases, id: \.self) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                } header: {
+                    Text(L2("Ngôn ngữ", "Language"))
+                }
+
+                Section {
+                    Toggle(L2("Khóa ứng dụng (Face ID / mật mã)", "App lock (Face ID / passcode)"), isOn: Binding(
                         get: { lock.isEnabled }, set: { lock.isEnabled = $0 }
                     ))
                 } header: {
-                    Text("Riêng tư")
+                    Text(L2("Riêng tư", "Privacy"))
                 } footer: {
-                    Text("Yêu cầu Face ID, Touch ID hoặc mật mã mỗi khi mở Velia. Màn hình cũng được che khi chuyển ứng dụng.")
+                    Text(L2("Yêu cầu Face ID, Touch ID hoặc mật mã mỗi khi mở Velia. Màn hình cũng được che khi chuyển ứng dụng.",
+                            "Requires Face ID, Touch ID or your passcode each time you open Velia. The screen is also hidden in the app switcher."))
                 }
 
                 if AppIconOption.supported {
                     Section {
-                        Picker("Biểu tượng", selection: $iconOption) {
+                        Picker(L2("Biểu tượng", "Icon"), selection: $iconOption) {
                             ForEach(AppIconOption.allCases) { Text($0.label).tag($0) }
                         }
                         .pickerStyle(.inline)
                         .labelsHidden()
                         .onChange(of: iconOption) { _, new in AppIconOption.apply(new) }
                     } header: {
-                        Text("Biểu tượng ứng dụng")
+                        Text(L2("Biểu tượng ứng dụng", "App icon"))
                     } footer: {
-                        Text("Biểu tượng trung tính giúp Velia kín đáo trên màn hình chính. Lưu ý: iOS không cho đổi tên hiển thị khi đang chạy — chỉ đổi được biểu tượng.")
+                        Text(L2("Biểu tượng trung tính giúp Velia kín đáo trên màn hình chính. Lưu ý: iOS không cho đổi tên hiển thị khi đang chạy — chỉ đổi được biểu tượng.",
+                                "A neutral icon keeps Velia discreet on your home screen. Note: iOS can't change the display name at runtime — only the icon."))
                     }
                 }
 
                 if let avg = store.averageCycleLength {
-                    Section("Từ dữ liệu của bạn") {
-                        LabeledContent("Độ dài chu kỳ thực tế", value: "\(avg) ngày")
-                        LabeledContent("Số chu kỳ đã ghi", value: "\(store.loggedCycleCount)")
+                    Section(L2("Từ dữ liệu của bạn", "From your data")) {
+                        LabeledContent(L2("Độ dài chu kỳ thực tế", "Actual cycle length"),
+                                       value: L2("\(avg) ngày", "\(avg) days"))
+                        LabeledContent(L2("Số chu kỳ đã ghi", "Cycles logged"), value: "\(store.loggedCycleCount)")
                     }
                 }
             }
-            .navigationTitle("Hồ sơ")
+            .navigationTitle(L2("Hồ sơ", "Profile"))
             .navigationBarTitleDisplayMode(.inline)
             .task { iconOption = AppIconOption.current }
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Hủy") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(L2("Hủy", "Cancel")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Lưu") {
+                    Button(L2("Lưu", "Save")) {
                         store.updateProfile(typicalCycleLength: cycleLength,
                                             segment: segment,
                                             birthYear: includeAge ? birthYear : nil,

@@ -20,14 +20,14 @@ struct TrackSheet: View {
                     VStack(alignment: .leading, spacing: Theme.spacingLarge) {
                         flowSection
                         if store.mode == .conceive { fertilitySection }
-                        symptomSection("Cảm xúc", category: TrackCatalog.feelingCategory, items: TrackCatalog.feelings)
-                        symptomSection("Cơn đau", category: TrackCatalog.painCategory, items: TrackCatalog.pains)
-                        exclusiveSection("Năng lượng", category: TrackCatalog.energyCategory, items: TrackCatalog.energy)
-                        exclusiveSection("Giấc ngủ", category: TrackCatalog.sleepCategory, items: TrackCatalog.sleep)
+                        symptomSection(L2("Cảm xúc", "Feelings"), category: TrackCatalog.feelingCategory, items: TrackCatalog.feelings)
+                        symptomSection(L2("Cơn đau", "Pain"), category: TrackCatalog.painCategory, items: TrackCatalog.pains)
+                        exclusiveSection(L2("Năng lượng", "Energy"), category: TrackCatalog.energyCategory, items: TrackCatalog.energy)
+                        exclusiveSection(L2("Giấc ngủ", "Sleep"), category: TrackCatalog.sleepCategory, items: TrackCatalog.sleep)
                         if store.mode != .conceive {
-                            exclusiveSection("Dịch tiết", category: TrackCatalog.dischargeCategory, items: TrackCatalog.discharge)
+                            exclusiveSection(L2("Dịch tiết", "Discharge"), category: TrackCatalog.dischargeCategory, items: TrackCatalog.discharge)
                         }
-                        exclusiveSection("Quan hệ", category: TrackCatalog.sexCategory, items: TrackCatalog.sex)
+                        exclusiveSection(L2("Quan hệ", "Sex"), category: TrackCatalog.sexCategory, items: TrackCatalog.sex)
                         noteField
                     }
                     .padding()
@@ -42,12 +42,12 @@ struct TrackSheet: View {
                     Button { dismiss() } label: { Image(systemName: "xmark") }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Xong") { dismiss() }.tint(Theme.accent).fontWeight(.semibold)
+                    Button(L2("Xong", "Done")) { dismiss() }.tint(Theme.accent).fontWeight(.semibold)
                 }
             }
             .safeAreaInset(edge: .bottom) {
                 Button { dismiss() } label: {
-                    Text("Lưu").frame(maxWidth: .infinity).padding(.vertical, 4)
+                    Text(L2("Lưu", "Save")).frame(maxWidth: .infinity).padding(.vertical, 4)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.accent)
@@ -58,7 +58,7 @@ struct TrackSheet: View {
     }
 
     private var headerTitle: String {
-        cal.isDateInToday(selectedDate) ? "Hôm nay" : Fmt.dayMonth.string(from: selectedDate)
+        cal.isDateInToday(selectedDate) ? L2("Hôm nay", "Today") : Fmt.dayMonth.string(from: selectedDate)
     }
 
     // MARK: Date strip
@@ -102,7 +102,7 @@ struct TrackSheet: View {
 
     private var flowSection: some View {
         VStack(alignment: .leading, spacing: Theme.spacing) {
-            sectionHeader("Lượng kinh")
+            sectionHeader(L2("Lượng kinh", "Flow"))
             HStack(spacing: 12) {
                 ForEach(FlowIntensity.allCases, id: \.self) { flow in
                     TrackTile(
@@ -150,23 +150,25 @@ struct TrackSheet: View {
 
     // MARK: Fertility signals (conceive mode) — logging only, Tier-1
 
-    private let mucusOptions: [(String?, String)] = [
-        (nil, "Không ghi"), ("dry", "Khô"), ("sticky", "Dính"),
-        ("creamy", "Kem"), ("eggwhite", "Trứng sống / dai"), ("watery", "Ướt"),
-    ]
-    private let lhOptions: [(String?, String)] = [
-        (nil, "Không ghi"), ("negative", "Âm tính"), ("peak", "Đỉnh (dương tính)"),
-    ]
+    private var mucusOptions: [(String?, String)] {
+        [(nil, L2("Không ghi", "Not logged")), ("dry", L2("Khô", "Dry")), ("sticky", L2("Dính", "Sticky")),
+         ("creamy", L2("Kem", "Creamy")), ("eggwhite", L2("Trứng sống / dai", "Egg-white / stretchy")),
+         ("watery", L2("Ướt", "Watery"))]
+    }
+    private var lhOptions: [(String?, String)] {
+        [(nil, L2("Không ghi", "Not logged")), ("negative", L2("Âm tính", "Negative")),
+         ("peak", L2("Đỉnh (dương tính)", "Peak (positive)"))]
+    }
 
     private func entry() -> FertilityRecord? { store.fertilityEntry(on: selectedDate) }
 
     private var fertilitySection: some View {
         VStack(alignment: .leading, spacing: Theme.spacing) {
-            sectionHeader("Khả năng sinh sản")
+            sectionHeader(L2("Khả năng sinh sản", "Fertility"))
 
             // BBT
             VStack(alignment: .leading, spacing: 6) {
-                Toggle("Nhiệt độ cơ thể (BBT)", isOn: Binding(
+                Toggle(L2("Nhiệt độ cơ thể (BBT)", "Body temperature (BBT)"), isOn: Binding(
                     get: { entry()?.bbtCelsius != nil },
                     set: { on in writeBBT(on ? (entry()?.bbtCelsius ?? 36.50) : nil) }
                 ))
@@ -178,12 +180,13 @@ struct TrackSheet: View {
             }
             .padding().background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
 
-            pickerRow("Dịch nhầy cổ tử cung", options: mucusOptions,
+            pickerRow(L2("Dịch nhầy cổ tử cung", "Cervical mucus"), options: mucusOptions,
                       selected: entry()?.cervicalMucus) { writeMucus($0) }
-            pickerRow("Que thử LH", options: lhOptions,
+            pickerRow(L2("Que thử LH", "LH test"), options: lhOptions,
                       selected: entry()?.lhTest) { writeLH($0) }
 
-            Text("Velia không phải công cụ tránh thai hay chẩn đoán y khoa. Hãy tham khảo ý kiến bác sĩ.")
+            Text(L2("Velia không phải công cụ tránh thai hay chẩn đoán y khoa. Hãy tham khảo ý kiến bác sĩ.",
+                    "Velia is not a contraceptive or medical-diagnosis tool. Please consult a doctor."))
                 .font(.caption2).foregroundStyle(.secondary)
         }
     }
@@ -212,8 +215,8 @@ struct TrackSheet: View {
 
     private var noteField: some View {
         VStack(alignment: .leading, spacing: Theme.spacing) {
-            sectionHeader("Ghi chú")
-            TextField("Điều gì đáng nhớ hôm nay?…", text: Binding(
+            sectionHeader(L2("Ghi chú", "Notes"))
+            TextField(L2("Điều gì đáng nhớ hôm nay?…", "Anything notable today?…"), text: Binding(
                 get: { store.note(on: selectedDate) },
                 set: { store.setNote($0, on: selectedDate) }
             ), axis: .vertical)
@@ -233,7 +236,7 @@ struct TrackSheet: View {
                     Button(label) { set(value) }
                 }
             } label: {
-                let current = options.first { $0.0 == selected }?.1 ?? "Không ghi"
+                let current = options.first { $0.0 == selected }?.1 ?? L2("Không ghi", "Not logged")
                 Text(current).font(.subheadline.weight(.medium)).foregroundStyle(Theme.accent)
             }
         }

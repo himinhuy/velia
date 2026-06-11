@@ -20,12 +20,8 @@ public final class LockManager {
     private var authenticating = false
 
     public init() {
-        let available = LockManager.canAuthenticate()
-        if UserDefaults.standard.object(forKey: enabledKey) == nil {
-            isEnabled = available           // mandatory-by-default when biometrics/passcode exist
-        } else {
-            isEnabled = UserDefaults.standard.bool(forKey: enabledKey)
-        }
+        // Opt-in: the app opens without a lock unless the user turns it on in Profile.
+        isEnabled = UserDefaults.standard.bool(forKey: enabledKey)
     }
 
     /// Whether the app should currently show the lock screen.
@@ -40,9 +36,9 @@ public final class LockManager {
         let ctx = LAContext()
         _ = ctx.canEvaluatePolicy(.deviceOwnerAuthentication, error: nil)
         switch ctx.biometryType {
-        case .faceID: return "Mở khóa bằng Face ID"
-        case .touchID: return "Mở khóa bằng Touch ID"
-        default: return "Mở khóa"
+        case .faceID: return L2("Mở khóa bằng Face ID", "Unlock with Face ID")
+        case .touchID: return L2("Mở khóa bằng Touch ID", "Unlock with Touch ID")
+        default: return L2("Mở khóa", "Unlock")
         }
     }
 
@@ -56,7 +52,7 @@ public final class LockManager {
         defer { authenticating = false }
 
         let context = LAContext()
-        context.localizedFallbackTitle = "Dùng mật mã"
+        context.localizedFallbackTitle = L2("Dùng mật mã", "Use passcode")
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: nil) else {
             // Can't authenticate (no passcode set) → don't trap the user out of their data.
             isUnlocked = true
@@ -64,7 +60,7 @@ public final class LockManager {
         }
         do {
             let ok = try await context.evaluatePolicy(.deviceOwnerAuthentication,
-                                                      localizedReason: "Mở khóa Velia")
+                                                      localizedReason: L2("Mở khóa Velia", "Unlock Velia"))
             isUnlocked = ok
         } catch {
             isUnlocked = false // stay locked on cancel/failure

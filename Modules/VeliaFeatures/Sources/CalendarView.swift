@@ -50,7 +50,7 @@ struct CalendarView: View {
 
     private var topBar: some View {
         HStack {
-            Label("Bộ lọc", systemImage: "slider.horizontal.3")
+            Label(L2("Bộ lọc", "Filter"), systemImage: "slider.horizontal.3")
                 .font(.subheadline.weight(.medium))
                 .padding(.horizontal, 14).padding(.vertical, 8)
                 .background(Color(.secondarySystemBackground), in: Capsule())

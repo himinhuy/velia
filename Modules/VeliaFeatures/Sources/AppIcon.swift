@@ -14,8 +14,8 @@ enum AppIconOption: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .primary: return "Velia (mặc định)"
-        case .neutral: return "Trung tính (kín đáo)"
+        case .primary: return L2("Velia (mặc định)", "Velia (default)")
+        case .neutral: return L2("Trung tính (kín đáo)", "Neutral (discreet)")
         }
     }
 
