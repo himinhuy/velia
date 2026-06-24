@@ -177,8 +177,10 @@ struct CycleRingModel {
                                   phaseName: phase, todayString: todayStr)
         }
 
-        // Predicted cycle length = day count from last start to the next predicted period start.
-        let nextStart = prediction.nextPeriod.start
+        // Use the point estimate (midpoint of the next-period window) so the ring agrees with the
+        // calendar, which also draws the predicted period at `pointDate`. Using the window's early
+        // edge here made the ring read ~7 days fewer than the calendar.
+        let nextStart = prediction.pointDate
         let daysUntil = max(0, Int(DayMath.daysBetween(today, nextStart).rounded()))
         let predictedLen = max(currentDay + daysUntil, store.profile.typicalCycleLength ?? 28)
         let cycleLength = min(max(predictedLen, 14), 60)
