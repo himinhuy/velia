@@ -15,10 +15,10 @@ struct CycleRingView: View {
     private var radius: CGFloat { (size - lineWidth) / 2 }
     private var center: CGPoint { CGPoint(x: size / 2, y: size / 2) }
 
-    // Brighter palette to match the reference (independent of the app's rose accent).
-    private let periodColor = Color(red: 0.95, green: 0.29, blue: 0.31)
+    // Match the calendar: rose period + teal fertile; the rest is the neutral track.
+    private let periodColor = Theme.accent
     private let fertileColor = Theme.fertile
-    private let ovulationDot = Color(red: 0.52, green: 0.81, blue: 0.95)
+    private let ovulationDot = Color.white.opacity(0.9)
     private let track = Color.white.opacity(0.10)
 
     var body: some View {
@@ -28,14 +28,10 @@ struct CycleRingView: View {
                 .stroke(track, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
 
             if model.hasData {
-                // Phase arcs tile the whole cycle: menstrual → follicular → fertile → luteal.
+                // Match the calendar: red period + teal fertile window; the rest is the gray track.
                 arc(from: 0, days: model.periodLength, color: periodColor)
                 if let ov = model.ovulationRange {
-                    arc(fromDay: model.periodLength, toDay: ov.lowerBound, color: Theme.follicular)
                     arc(fromDay: ov.lowerBound, toDay: ov.upperBound, color: fertileColor)
-                    arc(fromDay: ov.upperBound, toDay: model.cycleLength, color: Theme.luteal)
-                } else {
-                    arc(fromDay: model.periodLength, toDay: model.cycleLength, color: Theme.follicular)
                 }
                 dayTicks
                 if let ovDay = model.ovulationDay {
