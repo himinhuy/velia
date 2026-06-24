@@ -147,6 +147,43 @@ private final class MockPersistence: CyclePersistence, @unchecked Sendable {
     func save(_ state: PersistedState) { self.state = state }
 }
 
+@MainActor
+final class SubscriptionTests: XCTestCase {
+    private func fresh() -> SubscriptionManager {
+        SubscriptionManager(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+    }
+
+    func testTrialThenExpiryGatesApp() {
+        let sub = fresh()
+        XCTAssertTrue(sub.hasAccess, "Fresh install is in the free trial")
+        XCTAssertFalse(sub.needsPaywall)
+        if case .trial(let days) = sub.status { XCTAssertEqual(days, 7) } else { XCTFail("expected trial") }
+
+        sub.expireTrialForTesting()
+        XCTAssertFalse(sub.hasAccess)
+        XCTAssertTrue(sub.needsPaywall, "Expired trial gates the app")
+        XCTAssertEqual(sub.status, .expired)
+    }
+
+    func testSubscribeGrantsPremiumWithRenewal() {
+        let sub = fresh()
+        sub.expireTrialForTesting()
+        sub.subscribe()
+        XCTAssertTrue(sub.isSubscribed)
+        XCTAssertFalse(sub.needsPaywall, "Subscribing restores access")
+        XCTAssertNotNil(sub.renewalDate)
+        if case .premium = sub.status {} else { XCTFail("expected premium") }
+    }
+
+    func testCancelDropsPremium() {
+        let sub = fresh()
+        sub.subscribe()
+        sub.cancel()
+        XCTAssertFalse(sub.isSubscribed)
+        XCTAssertNil(sub.renewalDate)
+    }
+}
+
 /// In-memory registry double (no Keychain/disk).
 private final class MockRegistry: RegistryPersistence, @unchecked Sendable {
     private var registry: ProfileRegistry?

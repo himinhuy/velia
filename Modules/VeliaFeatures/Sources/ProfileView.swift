@@ -10,7 +10,10 @@ struct ProfileView: View {
     @Environment(LanguageManager.self) private var lang
     @Environment(ProfileStore.self) private var profiles
     @Environment(ReminderManager.self) private var reminders
+    @Environment(SubscriptionManager.self) private var subscription
     @Environment(\.dismiss) private var dismiss
+    @State private var showPaywall = false
+    @State private var confirmCancel = false
 
     @State private var cycleLength: Int
     @State private var periodLength: Int
@@ -28,6 +31,54 @@ struct ProfileView: View {
         _segment = State(initialValue: store.profile.segment)
         _includeAge = State(initialValue: store.profile.birthYear != nil)
         _birthYear = State(initialValue: store.profile.birthYear ?? 1995)
+    }
+
+    @ViewBuilder
+    private var subscriptionSection: some View {
+        Section {
+            switch subscription.status {
+            case .trial(let daysLeft):
+                LabeledContent(L2("Gói", "Plan"), value: L2("Miễn phí (dùng thử)", "Free (trial)"))
+                LabeledContent(L2("Còn lại", "Trial left"),
+                               value: L2("\(daysLeft) ngày", "\(daysLeft) days"))
+                Button { showPaywall = true } label: {
+                    Label(L2("Nâng cấp lên Premium", "Upgrade to Premium"), systemImage: "sparkles")
+                }
+            case .premium(let renewal):
+                LabeledContent(L2("Gói", "Plan"), value: "Premium")
+                LabeledContent(L2("Gia hạn", "Renews"), value: dateString(renewal))
+                Button(role: .destructive) { confirmCancel = true } label: {
+                    Label(L2("Hủy đăng ký", "Cancel Subscription"), systemImage: "xmark.circle")
+                }
+            case .expired:
+                LabeledContent(L2("Gói", "Plan"), value: L2("Miễn phí (đã hết dùng thử)", "Free (trial ended)"))
+                Button { showPaywall = true } label: {
+                    Label(L2("Nâng cấp lên Premium", "Upgrade to Premium"), systemImage: "sparkles")
+                }
+            }
+        } header: {
+            Text(L2("Gói đăng ký", "Subscription"))
+        } footer: {
+            // Demo helpers so the paywall gate can be exercised without waiting 7 days.
+            HStack {
+                Button(L2("Thử: hết hạn dùng thử", "Test: expire trial")) {
+                    subscription.expireTrialForTesting()
+                    dismiss() // reveal the paywall gate
+                }
+                Spacer()
+                Button(L2("Đặt lại dùng thử", "Reset trial")) {
+                    subscription.resetTrialForTesting()
+                }
+            }
+            .font(.caption2)
+        }
+    }
+
+    private func dateString(_ date: Date) -> String {
+        let df = DateFormatter()
+        df.locale = Locale(identifier: AppLanguage.current.localeIdentifier)
+        df.dateStyle = .medium
+        return df.string(from: date)
     }
 
     /// Binding that writes a reminder setting and reschedules notifications.
@@ -79,6 +130,8 @@ struct ProfileView: View {
                     Text(L2("Tùy chọn. Dữ liệu chỉ ở trên máy này — không tài khoản, không gửi đi đâu cả.",
                             "Optional. Your data stays on this device — no account, never sent anywhere."))
                 }
+
+                subscriptionSection
 
                 Section {
                     NavigationLink {
@@ -170,6 +223,16 @@ struct ProfileView: View {
             .navigationTitle(L2("Cài đặt", "Settings"))
             .navigationBarTitleDisplayMode(.inline)
             .task { iconOption = AppIconOption.current }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView(onClose: { showPaywall = false })
+            }
+            .confirmationDialog(L2("Hủy đăng ký Premium?", "Cancel Premium subscription?"),
+                                isPresented: $confirmCancel, titleVisibility: .visible) {
+                Button(L2("Hủy đăng ký", "Cancel subscription"), role: .destructive) {
+                    subscription.cancel()
+                }
+                Button(L2("Giữ lại", "Keep it"), role: .cancel) {}
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(L2("Hủy", "Cancel")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {

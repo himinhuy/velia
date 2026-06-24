@@ -10,6 +10,7 @@ public struct RootView: View {
     @State private var lock = LockManager()
     @State private var lang = LanguageManager()
     @State private var reminders = ReminderManager()
+    @State private var subscription = SubscriptionManager()
     @State private var tab: Tab = .cycle
     /// Non-nil while the Track sheet is open, holding the day being logged.
     @State private var trackDate: Date?
@@ -23,7 +24,9 @@ public struct RootView: View {
 
     public var body: some View {
         ZStack {
-            if let store = profiles.current {
+            if subscription.needsPaywall {
+                PaywallView()                 // hard gate after the 7-day trial expires
+            } else if let store = profiles.current {
                 mainContent(store)
             } else {
                 ProfileGateView()
@@ -44,6 +47,7 @@ public struct RootView: View {
         .environment(lang)
         .environment(profiles)
         .environment(reminders)
+        .environment(subscription)
         .task(id: profiles.activeID) {
             if let store = profiles.current { await reminders.apply(store: store) }
         }
