@@ -167,3 +167,18 @@ Sync is deferred, but retrofitting it onto a naive schema is brutal.
 - No clinician = accuracy brand rides on self-citations alone.
 - Build-first defers real market validation by ~6 months, in tension with the stated traction/learning goal.
 - Solo capacity is the single largest threat to the ~8-month timeline.
+
+---
+
+## Addendum — Tracking-mode picker (2026-06, implementation)
+A five-mode picker ("Velia có thể giúp gì cho bạn?") ships, but **Tier-1 posture is preserved** (invariant #6):
+- **Functional now:** *Theo dõi kỳ kinh* (period); *Đang muốn có thai* — the **Tier-1 fertility-*awareness*** reframing (emphasis on the existing low-confidence fertile window + manual BBT/cervical-mucus/LH + intimacy logging + a "không phải công cụ tránh thai/chẩn đoán" disclaimer; **no conception-optimization or probability claims, engine unchanged**); *Theo dõi không kinh nguyệt* (no forecast — logging only).
+- **Locked "Sắp ra mắt":** *Theo dõi thai kỳ* and *Theo dõi tiền mãn kinh* remain the gated **Tier-2/3** modes from `prd.md:120` / `discussion.md:139` — non-interactive until the funded, legally-reviewed decision.
+- Mode is a **non-destructive UI lens** over shared logs (persisted, optional → existing users default to period). Fertility signals stored in `FertilityRecord`; intimacy as a neutral `SymptomRecord`. All logging-only for now (no engine impact pending validation).
+
+## Addendum — "User login" = local profiles + PIN (2026-06, implementation)
+A request for "full user login and management" was resolved **without breaking local-first** (invariant #1): no cloud account, no server, no network. Instead:
+- **Local profiles**: multiple on-device profiles, each with its **own encrypted data file** (shared device key in Keychain). Create / rename / delete / switch; switching is non-destructive.
+- **Optional per-profile PIN** as an *access gate* (salted SHA-256 hash, never plaintext). Data-at-rest is encrypted by the device key regardless; the PIN gates UI access. (A future hardening could derive the per-profile key from the PIN.)
+- First run seeds a single default profile that inherits the legacy single-profile data file; a lone PIN-less profile means **no gate** (app opens directly).
+- A **real cloud account + sync** remains explicitly out of scope (would transmit PHI off-device → invariant #1) pending a funded, legally-reviewed decision.

@@ -1,0 +1,81 @@
+import SwiftUI
+import VeliaDesignSystem
+
+/// Subscription paywall. Shown full-screen (forced) when the trial has expired, or as a dismissible
+/// upsell from Settings. "Subscribe Now" runs the (simulated) purchase and returns full access.
+struct PaywallView: View {
+    @Environment(SubscriptionManager.self) private var subscription
+    /// Forced gate (no dismiss) vs. upsell sheet (dismissible).
+    var onClose: (() -> Void)?
+
+    private let benefits: [(String, String, String)] = [
+        ("infinity", "Toàn quyền sử dụng", "Full access to the app"),
+        ("chart.line.uptrend.xyaxis", "Dự đoán chu kỳ chính xác", "Accurate cycle predictions"),
+        ("lock.shield.fill", "Riêng tư tuyệt đối — dữ liệu chỉ trên máy", "Fully private — data stays on device"),
+        ("bell.badge.fill", "Nhắc nhở kỳ kinh & ghi nhật ký", "Period & logging reminders"),
+    ]
+
+    var body: some View {
+        ZStack {
+            Theme.screen.ignoresSafeArea()
+            VStack(spacing: Theme.spacingLarge) {
+                if let onClose {
+                    HStack {
+                        Spacer()
+                        Button(action: onClose) {
+                            Image(systemName: "xmark").font(.headline)
+                                .foregroundStyle(.secondary).padding(10)
+                                .background(Color(.secondarySystemBackground), in: Circle())
+                        }
+                    }
+                }
+                Spacer()
+
+                Image(systemName: "drop.fill").font(.system(size: 48)).foregroundStyle(Theme.accent)
+                Text(L2("Velia Premium", "Velia Premium")).font(.largeTitle.bold())
+                Text(L2("Tiếp tục sử dụng Velia đầy đủ sau khi hết hạn dùng thử 7 ngày.",
+                        "Keep full access to Velia after your 7-day free trial."))
+                    .font(.subheadline).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                VStack(alignment: .leading, spacing: Theme.spacing) {
+                    ForEach(benefits, id: \.0) { icon, vi, en in
+                        HStack(spacing: 12) {
+                            Image(systemName: icon).foregroundStyle(Theme.accent).frame(width: 26)
+                            Text(L2(vi, en)).font(.subheadline)
+                            Spacer()
+                        }
+                    }
+                }
+                .padding(.horizontal)
+
+                Spacer()
+
+                VStack(spacing: 6) {
+                    Text("\(SubscriptionManager.priceString) / \(L2("năm", "year"))")
+                        .font(.system(.title2, design: .rounded).weight(.bold))
+                    Text(L2("Tự động gia hạn hằng năm · hủy bất cứ lúc nào",
+                            "Renews yearly · cancel anytime"))
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+
+                Button {
+                    subscription.subscribe()
+                    onClose?()
+                } label: {
+                    Text(L2("Đăng ký ngay", "Subscribe Now"))
+                        .frame(maxWidth: .infinity).padding(.vertical, 6)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.accent)
+                .padding(.horizontal)
+
+                Text(L2("Thanh toán mô phỏng cục bộ (chưa tính phí thật).",
+                        "Local simulated purchase (no real charge)."))
+                    .font(.caption2).foregroundStyle(.tertiary)
+                    .padding(.bottom)
+            }
+            .padding()
+        }
+    }
+}

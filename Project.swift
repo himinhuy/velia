@@ -81,14 +81,26 @@ let project = Project(
                     "Velia reads body temperature, heart rate and sleep from Health to improve cycle predictions. This data stays on your device.",
                 "NSFaceIDUsageDescription":
                     "Velia uses Face ID to lock the app so only you can open it.",
+                // Discretion suite: a neutral alternate icon switchable at runtime. The primary icon
+                // is the asset-catalog AppIcon; the alternate is loose PNGs (AltNeutral@2x/@3x).
+                "CFBundleIcons": [
+                    "CFBundleAlternateIcons": [
+                        "Neutral": [
+                            "CFBundleIconFiles": ["AltNeutral"],
+                            "UIPrerenderedIcon": false,
+                        ],
+                    ],
+                ],
             ]),
             sources: ["App/Sources/**"],
+            resources: ["App/Resources/**"],
             dependencies: [.target(name: "VeliaFeatures")],
             settings: .settings(base: [
                 // Device builds: automatic dev signing with the team resolved above.
                 "CODE_SIGN_STYLE": "Automatic",
                 "DEVELOPMENT_TEAM": .string(developmentTeam),
                 "CODE_SIGN_IDENTITY": "Apple Development",
+                "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
                 // Release builds are fully standalone (no dev server) — native app embeds everything.
                 "PRODUCT_BUNDLE_IDENTIFIER": "\(bundlePrefix).ios",
             ])
