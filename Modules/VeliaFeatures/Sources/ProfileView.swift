@@ -61,18 +61,21 @@ struct ProfileView: View {
         } header: {
             Text(L2("Gói đăng ký", "Subscription"))
         } footer: {
-            // Demo helpers so the paywall gate can be exercised without waiting 7 days.
-            HStack {
-                Button(L2("Thử: hết hạn dùng thử", "Test: expire trial")) {
-                    subscription.expireTrialForTesting()
-                    dismiss() // reveal the paywall gate
+            #if DEBUG
+                // Dev-only helpers so the paywall gate can be exercised without waiting 7 days.
+                // Compiled out of Release builds — never ships to users.
+                HStack {
+                    Button(L2("Thử: hết hạn dùng thử", "Test: expire trial")) {
+                        subscription.expireTrialForTesting()
+                        dismiss() // reveal the paywall gate
+                    }
+                    Spacer()
+                    Button(L2("Đặt lại dùng thử", "Reset trial")) {
+                        subscription.resetTrialForTesting()
+                    }
                 }
-                Spacer()
-                Button(L2("Đặt lại dùng thử", "Reset trial")) {
-                    subscription.resetTrialForTesting()
-                }
-            }
-            .font(.caption2)
+                .font(.caption2)
+            #endif
         }
     }
 

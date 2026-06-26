@@ -182,3 +182,11 @@ A request for "full user login and management" was resolved **without breaking l
 - **Optional per-profile PIN** as an *access gate* (salted SHA-256 hash, never plaintext). Data-at-rest is encrypted by the device key regardless; the PIN gates UI access. (A future hardening could derive the per-profile key from the PIN.)
 - First run seeds a single default profile that inherits the legacy single-profile data file; a lone PIN-less profile means **no gate** (app opens directly).
 - A **real cloud account + sync** remains explicitly out of scope (would transmit PHI off-device → invariant #1) pending a funded, legally-reviewed decision.
+
+## Addendum — Commercialization pivot (2026-06)
+The app is moving toward a commercial release. Two earlier "locked" positions are **deliberately superseded** here (recorded so the docs don't contradict the code):
+
+- **"Free core forever" → freemium.** A **7-day free trial** then a **$3/year** subscription gates the app (`SubscriptionManager` + `PaywallView`). Status shows in Settings; one-tap cancel. The purchase is **simulated locally** today — the StoreKit-2 swap point is `SubscriptionManager.subscribe()` (needs a paid Apple Developer account + an auto-renewable product in App Store Connect).
+- **"No account" → on-device accounts.** Email/password **auth** (`AuthManager`) gates the app; passwords are **PBKDF2-hashed in the encrypted store** (no plaintext). **Still no server / no network** — invariant #1 (no PHI off-device) is intact. The cloud-auth + Sign-in-with-Apple + email password-reset swap points are `AuthManager.signUp/logIn/resetPassword` (need a backend + paid Apple account).
+
+**Invariant status:** #1 (no PHI off-device) and #6 (no Tier-2/3 claims) remain **intact**. The "free core" and "no account" product positions are intentionally retired; update `prd.md`/`architecture.md` prose when the backend lands. Local profiles + PIN (per-device sub-users) coexist with the account layer.
