@@ -41,7 +41,10 @@ struct TodayView: View {
                             Label(L2("Đổi chế độ", "Switch mode"), systemImage: "arrow.triangle.2.circlepath")
                         }
                         Button { showProfile = true } label: {
-                            Label(L2("Hồ sơ & độ dài chu kỳ", "Profile & cycle length"), systemImage: "person.crop.circle")
+                            Label(
+                                L2("Hồ sơ & độ dài chu kỳ", "Profile & cycle length"),
+                                systemImage: "person.crop.circle"
+                            )
                         }
                         Button { trackDate = Calendar.current.startOfDay(for: Date()) } label: {
                             Label(L2("Ghi nhật ký hôm nay", "Log today"), systemImage: "plus.circle")
@@ -60,9 +63,12 @@ struct TodayView: View {
             }
             .sheet(isPresented: $showProfile) { ProfileView(store: store) }
             .sheet(isPresented: $showModePicker) {
-                ModePickerView(current: store.mode, isOnboarding: false,
-                               onConfirm: { store.setMode($0); showModePicker = false },
-                               onCancel: { showModePicker = false })
+                ModePickerView(
+                    current: store.mode,
+                    isOnboarding: false,
+                    onConfirm: { store.setMode($0); showModePicker = false },
+                    onCancel: { showModePicker = false }
+                )
             }
         }
     }
@@ -77,8 +83,11 @@ struct TodayView: View {
         Button { showProfile = true } label: {
             HStack(spacing: 6) {
                 Text(L2("Độ dài chu kỳ:", "Cycle length:")).foregroundStyle(.secondary)
-                Text(L2("\(store.profile.typicalCycleLength ?? 28) ngày", "\(store.profile.typicalCycleLength ?? 28) days"))
-                    .fontWeight(.semibold).foregroundStyle(Theme.accent)
+                Text(L2(
+                    "\(store.profile.typicalCycleLength ?? 28) ngày",
+                    "\(store.profile.typicalCycleLength ?? 28) days"
+                ))
+                .fontWeight(.semibold).foregroundStyle(Theme.accent)
                 Image(systemName: "chevron.down").font(.caption2).foregroundStyle(Theme.accent)
             }
             .font(.subheadline)
@@ -97,13 +106,17 @@ struct TodayView: View {
                 Label(L2("Cửa sổ dễ thụ thai", "Fertile window"), systemImage: "sparkles")
                     .font(.headline).foregroundStyle(Theme.fertile)
                 Text(Fmt.range(ov)).font(.title3.weight(.semibold))
-                Text(L2("Ước tính độ tin cậy thấp khi chu kỳ chưa ổn định. Ghi thêm BBT, dịch nhầy và que thử LH để rõ hơn.",
-                        "Low-confidence estimate while your cycle is still settling. Log BBT, cervical mucus and LH tests to sharpen it."))
-                    .font(.caption).foregroundStyle(.secondary)
+                Text(L2(
+                    "Ước tính độ tin cậy thấp khi chu kỳ chưa ổn định. Ghi thêm BBT, dịch nhầy và que thử LH để rõ hơn.",
+                    "Low-confidence estimate while your cycle is still settling. Log BBT, cervical mucus and LH tests to sharpen it."
+                ))
+                .font(.caption).foregroundStyle(.secondary)
                 Divider()
-                Text(L2("Velia không phải công cụ tránh thai hay chẩn đoán y khoa. Hãy tham khảo ý kiến bác sĩ.",
-                        "Velia is not a contraceptive or medical-diagnosis tool. Please consult a doctor."))
-                    .font(.caption2).foregroundStyle(.secondary)
+                Text(L2(
+                    "Velia không phải công cụ tránh thai hay chẩn đoán y khoa. Hãy tham khảo ý kiến bác sĩ.",
+                    "Velia is not a contraceptive or medical-diagnosis tool. Please consult a doctor."
+                ))
+                .font(.caption2).foregroundStyle(.secondary)
             }
             .veliaCard()
         }
@@ -113,16 +126,18 @@ struct TodayView: View {
 
     private var recentLogs: some View {
         let cal = Calendar.current
-        let days: [Date] = (0..<14).compactMap { cal.date(byAdding: .day, value: -$0, to: Date()) }
+        let days: [Date] = (0 ..< 14).compactMap { cal.date(byAdding: .day, value: -$0, to: Date()) }
             .filter { store.hasAnyLog(on: $0) }
         return VStack(alignment: .leading, spacing: Theme.spacing) {
             Text(L2("Nhật ký gần đây", "Recent logs")).font(.title3.bold())
             if days.isEmpty {
-                Text(L2("Chưa có gì được ghi. Nhấn “＋ Theo dõi” để bắt đầu.",
-                        "Nothing logged yet. Tap “＋ Track” to begin."))
-                    .font(.subheadline).foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .veliaCard()
+                Text(L2(
+                    "Chưa có gì được ghi. Nhấn “＋ Theo dõi” để bắt đầu.",
+                    "Nothing logged yet. Tap “＋ Track” to begin."
+                ))
+                .font(.subheadline).foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .veliaCard()
             } else {
                 ForEach(days, id: \.self) { day in
                     HStack {
@@ -153,7 +168,10 @@ struct TodayView: View {
                 Image(systemName: "chevron.right").foregroundStyle(.secondary)
             }
             .padding()
-            .background(Color(.orange).opacity(0.18), in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+            .background(
+                Color(.orange).opacity(0.18),
+                in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+            )
             .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(.orange.opacity(0.4), lineWidth: 1))
         }
         .buttonStyle(.plain)

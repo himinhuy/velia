@@ -2,11 +2,11 @@ import XCTest
 @testable import VeliaCore
 
 final class PersistenceTests: XCTestCase {
-
     private let device = UUID()
     private func meta(updated: Date) -> SyncMetadata {
         SyncMetadata(createdAt: Date(timeIntervalSince1970: 0), updatedAt: updated, deviceID: device)
     }
+
     private func period(_ updated: Date, start: Date = Date(timeIntervalSince1970: 1000)) -> PeriodRecord {
         PeriodRecord(sync: meta(updated: updated), startDate: start)
     }

@@ -9,10 +9,10 @@ import ProjectDescription
 
 private let iOS: DeploymentTargets = .iOS("17.0")
 private let bundlePrefix = "app.velia"
-// Development signing: automatic profile managed by Xcode for the Apple ID already added to Xcode
-// (hi.minhuy@gmail.com → personal team "Giang Ngo"). This is a DEVELOPMENT team — Xcode provisions
-// an "Apple Development" profile, never an App Store / distribution one. Override with the
-// TUIST_DEVELOPMENT_TEAM env var if you sign with a different account.
+/// Development signing: automatic profile managed by Xcode for the Apple ID already added to Xcode
+/// (hi.minhuy@gmail.com → personal team "Giang Ngo"). This is a DEVELOPMENT team — Xcode provisions
+/// an "Apple Development" profile, never an App Store / distribution one. Override with the
+/// TUIST_DEVELOPMENT_TEAM env var if you sign with a different account.
 private let developmentTeam = Environment.developmentTeam.getString(default: "42C434U7BU")
 
 private func module(
@@ -29,7 +29,7 @@ private func module(
             deploymentTargets: iOS,
             sources: ["Modules/\(name)/Sources/**"],
             dependencies: dependencies
-        ),
+        )
     ]
     if hasTests {
         targets.append(
@@ -50,7 +50,7 @@ private func module(
 let project = Project(
     name: "Velia",
     packages: [
-        .local(path: "VeliaCore"),
+        .local(path: "VeliaCore")
         // NOTE: GRDB/SQLCipher is intentionally NOT wired yet. Vanilla GRDB lacks `usePassphrase`
         // (needs a SQLCipher-enabled build), and the VeliaData/VeliaSecurity scaffolds are unverified.
         // They are excluded from the build graph so the app COMPILES & RUNS today on the engine + UI.
@@ -64,7 +64,7 @@ let project = Project(
         "SWIFT_TREAT_WARNINGS_AS_ERRORS": "YES",
         // Apply the dev team to every target so embedded frameworks sign with the same identity.
         "CODE_SIGN_STYLE": "Automatic",
-        "DEVELOPMENT_TEAM": .string(developmentTeam),
+        "DEVELOPMENT_TEAM": .string(developmentTeam)
     ]),
     targets: [
         .target(
@@ -87,10 +87,10 @@ let project = Project(
                     "CFBundleAlternateIcons": [
                         "Neutral": [
                             "CFBundleIconFiles": ["AltNeutral"],
-                            "UIPrerenderedIcon": false,
-                        ],
-                    ],
-                ],
+                            "UIPrerenderedIcon": false
+                        ]
+                    ]
+                ]
             ]),
             sources: ["App/Sources/**"],
             resources: ["App/Resources/**"],
@@ -102,7 +102,7 @@ let project = Project(
                 "CODE_SIGN_IDENTITY": "Apple Development",
                 "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
                 // Release builds are fully standalone (no dev server) — native app embeds everything.
-                "PRODUCT_BUNDLE_IDENTIFIER": "\(bundlePrefix).ios",
+                "PRODUCT_BUNDLE_IDENTIFIER": "\(bundlePrefix).ios"
             ])
         ),
         .target(
@@ -113,14 +113,14 @@ let project = Project(
             deploymentTargets: iOS,
             sources: ["App/UITests/**"],
             dependencies: [.target(name: "Velia")]
-        ),
+        )
     ]
-    // Buildable graph today: app → VeliaFeatures → (VeliaDesignSystem, VeliaCore).
-    + module("VeliaFeatures", dependencies: [
-        .target(name: "VeliaDesignSystem"),
-        .package(product: "VeliaCore"),
-    ])
-    + module("VeliaDesignSystem")
+        // Buildable graph today: app → VeliaFeatures → (VeliaDesignSystem, VeliaCore).
+        + module("VeliaFeatures", dependencies: [
+            .target(name: "VeliaDesignSystem"),
+            .package(product: "VeliaCore")
+        ])
+        + module("VeliaDesignSystem")
     // Deferred (scaffolds present under Modules/, re-add once SQLCipher GRDB is configured):
     //   module("VeliaData", deps: [VeliaSecurity, VeliaCore, GRDB])
     //   module("VeliaSecurity")

@@ -14,6 +14,7 @@ public final class LockManager {
     public var isEnabled: Bool {
         didSet { UserDefaults.standard.set(isEnabled, forKey: enabledKey) }
     }
+
     /// Unlocked for this foreground session. Reset on background / cold launch.
     public private(set) var isUnlocked = false
     /// True while a system auth prompt is on screen (prevents double prompts).
@@ -25,7 +26,9 @@ public final class LockManager {
     }
 
     /// Whether the app should currently show the lock screen.
-    public var isLocked: Bool { isEnabled && !isUnlocked }
+    public var isLocked: Bool {
+        isEnabled && !isUnlocked
+    }
 
     public static func canAuthenticate() -> Bool {
         LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: nil)
@@ -43,7 +46,9 @@ public final class LockManager {
     }
 
     /// Re-lock (instant lock / on background).
-    public func lock() { isUnlocked = false }
+    public func lock() {
+        isUnlocked = false
+    }
 
     /// Prompt the system for authentication. No-op if disabled, already unlocked, or mid-prompt.
     public func authenticate() async {
@@ -59,8 +64,10 @@ public final class LockManager {
             return
         }
         do {
-            let ok = try await context.evaluatePolicy(.deviceOwnerAuthentication,
-                                                      localizedReason: L2("Mở khóa Velia", "Unlock Velia"))
+            let ok = try await context.evaluatePolicy(
+                .deviceOwnerAuthentication,
+                localizedReason: L2("Mở khóa Velia", "Unlock Velia")
+            )
             isUnlocked = ok
         } catch {
             isUnlocked = false // stay locked on cancel/failure

@@ -12,7 +12,7 @@ public struct AppDatabase {
     public init(url: URL, key: Data) throws {
         var config = Configuration()
         config.prepareDatabase { db in
-            try db.usePassphrase(key)          // SQLCipher: PRAGMA key
+            try db.usePassphrase(key) // SQLCipher: PRAGMA key
         }
         pool = try DatabasePool(path: url.path, configuration: config)
         try Self.migrator.migrate(pool)
@@ -22,7 +22,7 @@ public struct AppDatabase {
     static var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
         #if DEBUG
-        migrator.eraseDatabaseOnSchemaChange = true
+            migrator.eraseDatabaseOnSchemaChange = true
         #endif
 
         migrator.registerMigration("v1") { db in
@@ -31,7 +31,7 @@ public struct AppDatabase {
                 t.column("createdAt", .datetime).notNull()
                 t.column("updatedAt", .datetime).notNull()
                 t.column("deviceID", .text).notNull()
-                t.column("deletedAt", .datetime)        // tombstone — soft delete only
+                t.column("deletedAt", .datetime) // tombstone — soft delete only
             }
 
             try db.create(table: "period_events") { t in

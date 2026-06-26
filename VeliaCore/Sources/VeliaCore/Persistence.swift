@@ -1,6 +1,7 @@
 import Foundation
 
 // MARK: - Sync-ready persistence model (pure Swift, no GRDB)
+
 //
 // Architecture invariant #5: every persisted row is sync-ready (UUID id, updated_at, device_id,
 // deleted_at) even though no sync code ships at MVP. This file defines the storage contracts, the
@@ -15,11 +16,13 @@ public struct SyncMetadata: Sendable, Equatable, Codable {
     public var deviceID: UUID
     public var deletedAt: Date?
 
-    public init(id: UUID = UUID(),
-                createdAt: Date = Date(),
-                updatedAt: Date = Date(),
-                deviceID: UUID,
-                deletedAt: Date? = nil) {
+    public init(
+        id: UUID = UUID(),
+        createdAt: Date = Date(),
+        updatedAt: Date = Date(),
+        deviceID: UUID,
+        deletedAt: Date? = nil
+    ) {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt
@@ -27,7 +30,9 @@ public struct SyncMetadata: Sendable, Equatable, Codable {
         self.deletedAt = deletedAt
     }
 
-    public var isDeleted: Bool { deletedAt != nil }
+    public var isDeleted: Bool {
+        deletedAt != nil
+    }
 
     /// Stamp an edit: bump `updatedAt` and record which device made it.
     public mutating func touch(at date: Date = Date(), deviceID: UUID) {
@@ -42,8 +47,13 @@ public protocol SyncRecord: Sendable, Identifiable, Equatable, Codable {
 }
 
 public extension SyncRecord {
-    var id: UUID { sync.id }
-    var isDeleted: Bool { sync.isDeleted }
+    var id: UUID {
+        sync.id
+    }
+
+    var isDeleted: Bool {
+        sync.isDeleted
+    }
 }
 
 // MARK: - Last-write-wins conflict resolution
@@ -72,7 +82,9 @@ public protocol Repository<Element>: Sendable {
 }
 
 public extension Repository {
-    func all() async throws -> [Element] { try await all(includingDeleted: false) }
+    func all() async throws -> [Element] {
+        try await all(includingDeleted: false)
+    }
 }
 
 // MARK: - In-memory reference implementation (used by tests, previews, and as the GRDB spec)
@@ -81,7 +93,9 @@ public actor InMemoryRepository<Element: SyncRecord>: Repository {
     private var storage: [UUID: Element] = [:]
 
     public init(_ seed: [Element] = []) {
-        for element in seed { storage[element.id] = element }
+        for element in seed {
+            storage[element.id] = element
+        }
     }
 
     public func all(includingDeleted: Bool) -> [Element] {
@@ -130,8 +144,13 @@ public struct PeriodRecord: SyncRecord {
     public var flow: FlowIntensity?
     public var isSpotting: Bool
 
-    public init(sync: SyncMetadata, startDate: Date, endDate: Date? = nil,
-                flow: FlowIntensity? = nil, isSpotting: Bool = false) {
+    public init(
+        sync: SyncMetadata,
+        startDate: Date,
+        endDate: Date? = nil,
+        flow: FlowIntensity? = nil,
+        isSpotting: Bool = false
+    ) {
         self.sync = sync
         self.startDate = startDate
         self.endDate = endDate
@@ -143,7 +162,7 @@ public struct PeriodRecord: SyncRecord {
 public struct SymptomRecord: SyncRecord {
     public var sync: SyncMetadata
     public var date: Date
-    public var type: String       // e.g. "mood", "energy", "sleep", "pain"
+    public var type: String // e.g. "mood", "energy", "sleep", "pain"
     public var value: Double
     public var note: String?
 
@@ -161,11 +180,17 @@ public struct FertilityRecord: SyncRecord {
     public var date: Date
     public var bbtCelsius: Double?
     public var cervicalMucus: String?
-    public var lhTest: String?    // "negative" / "peak"
-    public var source: String     // "manual" / "healthkit"
+    public var lhTest: String? // "negative" / "peak"
+    public var source: String // "manual" / "healthkit"
 
-    public init(sync: SyncMetadata, date: Date, bbtCelsius: Double? = nil,
-                cervicalMucus: String? = nil, lhTest: String? = nil, source: String = "manual") {
+    public init(
+        sync: SyncMetadata,
+        date: Date,
+        bbtCelsius: Double? = nil,
+        cervicalMucus: String? = nil,
+        lhTest: String? = nil,
+        source: String = "manual"
+    ) {
         self.sync = sync
         self.date = date
         self.bbtCelsius = bbtCelsius

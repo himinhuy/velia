@@ -54,6 +54,8 @@ jobs:
   app-build:
     name: App — build & unit tests (iOS Simulator)
     runs-on: macos-15
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # authenticate mise's tool downloads (avoid rate limit)
     steps:
       - uses: actions/checkout@v4
 

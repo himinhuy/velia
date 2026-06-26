@@ -21,23 +21,23 @@ public struct SegmentPrior: Sendable {
         // Bull et al. 2019 (npj Digit Med): 612,613 ovulatory cycles, mean 29.3 ± 5.2 days;
         // 65% of cycles 25–30 days; only 13% exactly 28. Apple WHS 2023/2025: within-person SD
         // ~6 days for regular cyclers. Prior mean ≈ population mean; SD ≈ between-person spread.
-        case .typical:        return SegmentPrior(mean: 29, sd: 4)
+        case .typical: SegmentPrior(mean: 29, sd: 4)
 
         // Apple Women's Health Study 2025 (AJOG): PCOS mean cycle length 33.4–35.7 days (by age),
         // within-individual SD 8.4–11.0 days (vs ~6 for regular). High mean + heavy variability.
-        case .pcos:           return SegmentPrior(mean: 35, sd: 12)
+        case .pcos: SegmentPrior(mean: 35, sd: 12)
 
         // STRAW+10 (Harlow et al. 2012) / SWAN: the menopausal transition begins with persistent
         // ≥7-day changes in consecutive cycle length and episodes of ≥60-day amenorrhea — i.e.
         // lengthening + sharply rising variability. Wide prior.
-        case .perimenopause:  return SegmentPrior(mean: 32, sd: 14)
+        case .perimenopause: SegmentPrior(mean: 32, sd: 14)
 
         // Postpartum return of menses is highly variable (≈6–8 wk if not breastfeeding; months while
         // lactating), and the first cycles are often long/irregular before normalizing. Wide prior.
-        case .postpartum:     return SegmentPrior(mean: 35, sd: 14)
+        case .postpartum: SegmentPrior(mean: 35, sd: 14)
 
         // Unlabeled users: blend toward the population with extra uncertainty.
-        case .unknown:        return SegmentPrior(mean: 30, sd: 8)
+        case .unknown: SegmentPrior(mean: 30, sd: 8)
         }
     }
 
@@ -51,6 +51,7 @@ public struct SegmentPrior: Sendable {
 }
 
 // MARK: - References (sources for the priors above)
+
 //
 // 1. Bull JR, et al. "Real-world menstrual cycle characteristics of more than 600,000 menstrual
 //    cycles." npj Digital Medicine 2:83 (2019). https://www.nature.com/articles/s41746-019-0152-7

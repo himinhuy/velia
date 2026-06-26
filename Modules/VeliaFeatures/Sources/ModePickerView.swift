@@ -14,8 +14,12 @@ struct ModePickerView: View {
 
     @State private var selection: TrackingMode?
 
-    init(current: TrackingMode?, isOnboarding: Bool,
-         onConfirm: @escaping (TrackingMode) -> Void, onCancel: @escaping () -> Void) {
+    init(
+        current: TrackingMode?,
+        isOnboarding: Bool,
+        onConfirm: @escaping (TrackingMode) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
         self.current = current
         self.isOnboarding = isOnboarding
         self.onConfirm = onConfirm
@@ -63,7 +67,8 @@ struct ModePickerView: View {
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(L2("Velia có thể giúp gì cho bạn?", "What can we help you do?")).font(.title3.bold())
-                Text(L2("Bạn có thể thay đổi bất cứ lúc nào.", "You can change this anytime.")).font(.subheadline).foregroundStyle(.secondary)
+                Text(L2("Bạn có thể thay đổi bất cứ lúc nào.", "You can change this anytime.")).font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
             Spacer()
         }
@@ -96,8 +101,10 @@ struct ModePickerView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
-            .background(selected ? Theme.accent : Color.clear,
-                        in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+            .background(
+                selected ? Theme.accent : Color.clear,
+                in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
                     .stroke(.white.opacity(selected ? 0 : 0.18), lineWidth: 1)

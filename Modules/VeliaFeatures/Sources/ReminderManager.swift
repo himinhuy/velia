@@ -21,15 +21,29 @@ public final class ReminderManager {
         static let fertile = "velia.rem.fertile"
     }
 
-    public var periodReminderEnabled: Bool { didSet { ud.set(periodReminderEnabled, forKey: Keys.period) } }
-    public var periodLeadDays: Int { didSet { ud.set(periodLeadDays, forKey: Keys.lead) } }
-    public var logNudgeEnabled: Bool { didSet { ud.set(logNudgeEnabled, forKey: Keys.nudge) } }
-    public var logNudgeHour: Int { didSet { ud.set(logNudgeHour, forKey: Keys.nudgeHour) } }
-    public var fertileReminderEnabled: Bool { didSet { ud.set(fertileReminderEnabled, forKey: Keys.fertile) } }
+    public var periodReminderEnabled: Bool {
+        didSet { ud.set(periodReminderEnabled, forKey: Keys.period) }
+    }
+
+    public var periodLeadDays: Int {
+        didSet { ud.set(periodLeadDays, forKey: Keys.lead) }
+    }
+
+    public var logNudgeEnabled: Bool {
+        didSet { ud.set(logNudgeEnabled, forKey: Keys.nudge) }
+    }
+
+    public var logNudgeHour: Int {
+        didSet { ud.set(logNudgeHour, forKey: Keys.nudgeHour) }
+    }
+
+    public var fertileReminderEnabled: Bool {
+        didSet { ud.set(fertileReminderEnabled, forKey: Keys.fertile) }
+    }
 
     private let ud = UserDefaults.standard
-    // Lazy + observation-ignored: UNUserNotificationCenter.current() requires an app bundle (crashes
-    // in the test host), so it's only created when reminders actually run, never on construction.
+    /// Lazy + observation-ignored: UNUserNotificationCenter.current() requires an app bundle (crashes
+    /// in the test host), so it's only created when reminders actually run, never on construction.
     @ObservationIgnored private lazy var center = UNUserNotificationCenter.current()
 
     public init() {
@@ -40,7 +54,9 @@ public final class ReminderManager {
         fertileReminderEnabled = ud.bool(forKey: Keys.fertile)
     }
 
-    public var anyEnabled: Bool { periodReminderEnabled || logNudgeEnabled || fertileReminderEnabled }
+    public var anyEnabled: Bool {
+        periodReminderEnabled || logNudgeEnabled || fertileReminderEnabled
+    }
 
     /// Request permission (if any reminder is on) and (re)schedule from the active profile's data.
     public func apply(store: CycleStore) async {
@@ -63,16 +79,23 @@ public final class ReminderManager {
         }
 
         if fertileReminderEnabled, store.mode == .conceive, let ov = store.prediction?.ovulation,
-           ov.start > Date() {
-            schedule(Self.fertileID, on: at9am(ov.start, cal),
-                     body: L2("Cửa sổ dễ thụ thai sắp bắt đầu.", "Your fertile window is starting soon."))
+           ov.start > Date()
+        {
+            schedule(
+                Self.fertileID,
+                on: at9am(ov.start, cal),
+                body: L2("Cửa sổ dễ thụ thai sắp bắt đầu.", "Your fertile window is starting soon.")
+            )
         }
 
         if logNudgeEnabled {
             var dc = DateComponents()
             dc.hour = logNudgeHour
-            scheduleRepeating(Self.logNudgeID, components: dc,
-                              body: L2("Đừng quên ghi nhật ký hôm nay.", "Don't forget to log today."))
+            scheduleRepeating(
+                Self.logNudgeID,
+                components: dc,
+                body: L2("Đừng quên ghi nhật ký hôm nay.", "Don't forget to log today.")
+            )
         }
     }
 
@@ -108,7 +131,7 @@ public final class ReminderManager {
         case .authorized, .provisional, .ephemeral:
             return true
         case .notDetermined:
-            return (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
+            return await (try? center.requestAuthorization(options: [.alert, .sound])) ?? false
         default:
             return false
         }

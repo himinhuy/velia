@@ -28,7 +28,7 @@ struct PINEntryView: View {
             if let subtitle { Text(subtitle).font(.subheadline).foregroundStyle(.secondary) }
 
             HStack(spacing: 16) {
-                ForEach(0..<maxLen, id: \.self) { i in
+                ForEach(0 ..< maxLen, id: \.self) { i in
                     Circle()
                         .strokeBorder(error ? .red : Theme.accent, lineWidth: 1.5)
                         .background(Circle().fill(i < pin.count ? Theme.accent : .clear))
@@ -97,7 +97,7 @@ struct PINEntryView: View {
 /// Horizontal shake for a wrong PIN.
 private struct Shake: GeometryEffect {
     var animatableData: CGFloat
-    func effectValue(size: CGSize) -> ProjectionTransform {
+    func effectValue(size _: CGSize) -> ProjectionTransform {
         let dx = sin(animatableData * .pi * 4) * 8
         return ProjectionTransform(CGAffineTransform(translationX: dx, y: 0))
     }

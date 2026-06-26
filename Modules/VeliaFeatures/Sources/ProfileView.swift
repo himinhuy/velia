@@ -23,7 +23,7 @@ struct ProfileView: View {
     @State private var birthYear: Int
     @State private var iconOption: AppIconOption = .primary
 
-    private let years = Array(1955...2012).reversed()
+    private let years = Array(1955 ... 2012).reversed()
 
     init(store: CycleStore) {
         self.store = store
@@ -34,18 +34,19 @@ struct ProfileView: View {
         _birthYear = State(initialValue: store.profile.birthYear ?? 1995)
     }
 
-    @ViewBuilder
     private var subscriptionSection: some View {
         Section {
             switch subscription.status {
-            case .trial(let daysLeft):
+            case let .trial(daysLeft):
                 LabeledContent(L2("Gói", "Plan"), value: L2("Miễn phí (dùng thử)", "Free (trial)"))
-                LabeledContent(L2("Còn lại", "Trial left"),
-                               value: L2("\(daysLeft) ngày", "\(daysLeft) days"))
+                LabeledContent(
+                    L2("Còn lại", "Trial left"),
+                    value: L2("\(daysLeft) ngày", "\(daysLeft) days")
+                )
                 Button { showPaywall = true } label: {
                     Label(L2("Nâng cấp lên Premium", "Upgrade to Premium"), systemImage: "sparkles")
                 }
-            case .premium(let renewal):
+            case let .premium(renewal):
                 LabeledContent(L2("Gói", "Plan"), value: "Premium")
                 LabeledContent(L2("Gia hạn", "Renews"), value: dateString(renewal))
                 Button(role: .destructive) { confirmCancel = true } label: {
@@ -94,17 +95,33 @@ struct ProfileView: View {
         NavigationStack {
             Form {
                 Section {
-                    Stepper(L2("Độ dài chu kỳ trung bình: \(cycleLength) ngày",
-                               "Average cycle length: \(cycleLength) days"),
-                            value: $cycleLength, in: 18...60)
-                    Stepper(L2("Số ngày hành kinh: \(periodLength) ngày",
-                               "Period length: \(periodLength) days"),
-                            value: $periodLength, in: 1...10)
+                    Stepper(
+                        L2(
+                            "Độ dài chu kỳ trung bình: \(cycleLength) ngày",
+                            "Average cycle length: \(cycleLength) days"
+                        ),
+                        value: $cycleLength,
+                        in: 18 ... 60
+                    )
+                    Stepper(
+                        L2(
+                            "Số ngày hành kinh: \(periodLength) ngày",
+                            "Period length: \(periodLength) days"
+                        ),
+                        value: $periodLength,
+                        in: 1 ... 10
+                    )
                 } header: {
                     Text(L2("Chu kỳ", "Cycle"))
                 } footer: {
-                    Text(L2("Độ dài chu kỳ = khoảng cách giữa hai lần bắt đầu kỳ kinh. Số ngày hành kinh = kỳ kinh kéo dài bao lâu (thường 2–6 ngày). Velia dùng các số này khi chưa đủ dữ liệu, rồi tự học từ nhật ký của bạn.",
-                            "Cycle length = the gap between two period starts. Period length = how long a period lasts (typically 2–6 days). Velia uses these until it has enough data, then learns from your logs."))
+                    Text(L2(
+                        "Độ dài chu kỳ = khoảng cách giữa hai lần bắt đầu kỳ kinh. " +
+                            "Số ngày hành kinh = kỳ kinh kéo dài bao lâu (thường 2–6 ngày). " +
+                            "Velia dùng các số này khi chưa đủ dữ liệu, rồi tự học từ nhật ký của bạn.",
+                        "Cycle length = the gap between two period starts. " +
+                            "Period length = how long a period lasts (typically 2–6 days). " +
+                            "Velia uses these until it has enough data, then learns from your logs."
+                    ))
                 }
 
                 Section {
@@ -116,8 +133,10 @@ struct ProfileView: View {
                 } header: {
                     Text(L2("Tình trạng chu kỳ", "Cycle status"))
                 } footer: {
-                    Text(L2("Chu kỳ càng thất thường, Velia càng để khoảng dự đoán rộng hơn cho trung thực.",
-                            "The more irregular your cycle, the wider Velia keeps its prediction range — to stay honest."))
+                    Text(L2(
+                        "Chu kỳ càng thất thường, Velia càng để khoảng dự đoán rộng hơn cho trung thực.",
+                        "The more irregular your cycle, the wider Velia keeps its prediction range — to stay honest."
+                    ))
                 }
 
                 Section {
@@ -128,8 +147,10 @@ struct ProfileView: View {
                         }
                     }
                 } footer: {
-                    Text(L2("Tùy chọn. Dữ liệu chỉ ở trên máy này — không tài khoản, không gửi đi đâu cả.",
-                            "Optional. Your data stays on this device — no account, never sent anywhere."))
+                    Text(L2(
+                        "Tùy chọn. Dữ liệu chỉ ở trên máy này — không tài khoản, không gửi đi đâu cả.",
+                        "Optional. Your data stays on this device — no account, never sent anywhere."
+                    ))
                 }
 
                 subscriptionSection
@@ -177,27 +198,41 @@ struct ProfileView: View {
                 }
 
                 Section {
-                    Toggle(L2("Nhắc kỳ kinh sắp tới", "Upcoming period reminder"),
-                           isOn: reminderBinding(\.periodReminderEnabled))
+                    Toggle(
+                        L2("Nhắc kỳ kinh sắp tới", "Upcoming period reminder"),
+                        isOn: reminderBinding(\.periodReminderEnabled)
+                    )
                     if reminders.periodReminderEnabled {
-                        Stepper(L2("Báo trước \(reminders.periodLeadDays) ngày", "\(reminders.periodLeadDays) days before"),
-                                value: reminderBinding(\.periodLeadDays), in: 0...5)
+                        Stepper(
+                            L2("Báo trước \(reminders.periodLeadDays) ngày", "\(reminders.periodLeadDays) days before"),
+                            value: reminderBinding(\.periodLeadDays),
+                            in: 0 ... 5
+                        )
                     }
                     if store.mode == .conceive {
-                        Toggle(L2("Nhắc cửa sổ dễ thụ thai", "Fertile window reminder"),
-                               isOn: reminderBinding(\.fertileReminderEnabled))
+                        Toggle(
+                            L2("Nhắc cửa sổ dễ thụ thai", "Fertile window reminder"),
+                            isOn: reminderBinding(\.fertileReminderEnabled)
+                        )
                     }
-                    Toggle(L2("Nhắc ghi nhật ký hằng ngày", "Daily log reminder"),
-                           isOn: reminderBinding(\.logNudgeEnabled))
+                    Toggle(
+                        L2("Nhắc ghi nhật ký hằng ngày", "Daily log reminder"),
+                        isOn: reminderBinding(\.logNudgeEnabled)
+                    )
                     if reminders.logNudgeEnabled {
-                        Stepper(L2("Lúc \(reminders.logNudgeHour) giờ", "At \(reminders.logNudgeHour):00"),
-                                value: reminderBinding(\.logNudgeHour), in: 6...23)
+                        Stepper(
+                            L2("Lúc \(reminders.logNudgeHour) giờ", "At \(reminders.logNudgeHour):00"),
+                            value: reminderBinding(\.logNudgeHour),
+                            in: 6 ... 23
+                        )
                     }
                 } header: {
                     Text(L2("Nhắc nhở", "Reminders"))
                 } footer: {
-                    Text(L2("Thông báo cục bộ trên máy — không gửi đi đâu cả.",
-                            "Local notifications on this device — nothing is sent anywhere."))
+                    Text(L2(
+                        "Thông báo cục bộ trên máy — không gửi đi đâu cả.",
+                        "Local notifications on this device — nothing is sent anywhere."
+                    ))
                 }
 
                 Section {
@@ -207,8 +242,10 @@ struct ProfileView: View {
                 } header: {
                     Text(L2("Riêng tư", "Privacy"))
                 } footer: {
-                    Text(L2("Yêu cầu Face ID, Touch ID hoặc mật mã mỗi khi mở Velia. Màn hình cũng được che khi chuyển ứng dụng.",
-                            "Requires Face ID, Touch ID or your passcode each time you open Velia. The screen is also hidden in the app switcher."))
+                    Text(L2(
+                        "Yêu cầu Face ID, Touch ID hoặc mật mã mỗi khi mở Velia. Màn hình cũng được che khi chuyển ứng dụng.",
+                        "Requires Face ID, Touch ID or your passcode each time you open Velia. The screen is also hidden in the app switcher."
+                    ))
                 }
 
                 if AppIconOption.supported {
@@ -222,15 +259,21 @@ struct ProfileView: View {
                     } header: {
                         Text(L2("Biểu tượng ứng dụng", "App icon"))
                     } footer: {
-                        Text(L2("Biểu tượng trung tính giúp Velia kín đáo trên màn hình chính. Lưu ý: iOS không cho đổi tên hiển thị khi đang chạy — chỉ đổi được biểu tượng.",
-                                "A neutral icon keeps Velia discreet on your home screen. Note: iOS can't change the display name at runtime — only the icon."))
+                        Text(L2(
+                            "Biểu tượng trung tính giúp Velia kín đáo trên màn hình chính. " +
+                                "Lưu ý: iOS không cho đổi tên hiển thị khi đang chạy — chỉ đổi được biểu tượng.",
+                            "A neutral icon keeps Velia discreet on your home screen. " +
+                                "Note: iOS can't change the display name at runtime — only the icon."
+                        ))
                     }
                 }
 
                 if let avg = store.averageCycleLength {
                     Section(L2("Từ dữ liệu của bạn", "From your data")) {
-                        LabeledContent(L2("Độ dài chu kỳ thực tế", "Actual cycle length"),
-                                       value: L2("\(avg) ngày", "\(avg) days"))
+                        LabeledContent(
+                            L2("Độ dài chu kỳ thực tế", "Actual cycle length"),
+                            value: L2("\(avg) ngày", "\(avg) days")
+                        )
                         LabeledContent(L2("Số chu kỳ đã ghi", "Cycles logged"), value: "\(store.loggedCycleCount)")
                     }
                 }
@@ -241,8 +284,11 @@ struct ProfileView: View {
             .sheet(isPresented: $showPaywall) {
                 PaywallView(onClose: { showPaywall = false })
             }
-            .confirmationDialog(L2("Hủy đăng ký Premium?", "Cancel Premium subscription?"),
-                                isPresented: $confirmCancel, titleVisibility: .visible) {
+            .confirmationDialog(
+                L2("Hủy đăng ký Premium?", "Cancel Premium subscription?"),
+                isPresented: $confirmCancel,
+                titleVisibility: .visible
+            ) {
                 Button(L2("Hủy đăng ký", "Cancel subscription"), role: .destructive) {
                     subscription.cancel()
                 }
@@ -252,10 +298,12 @@ struct ProfileView: View {
                 ToolbarItem(placement: .cancellationAction) { Button(L2("Hủy", "Cancel")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L2("Lưu", "Save")) {
-                        store.updateProfile(typicalCycleLength: cycleLength,
-                                            segment: segment,
-                                            birthYear: includeAge ? birthYear : nil,
-                                            periodLength: periodLength)
+                        store.updateProfile(
+                            typicalCycleLength: cycleLength,
+                            segment: segment,
+                            birthYear: includeAge ? birthYear : nil,
+                            periodLength: periodLength
+                        )
                         dismiss()
                     }
                     .fontWeight(.semibold)

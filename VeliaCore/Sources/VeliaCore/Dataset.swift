@@ -1,6 +1,7 @@
 import Foundation
 
 // MARK: - Benchmark dataset abstraction
+
 //
 // Swapping the synthetic stand-in for the real licensed/public irregular-cycle dataset
 // (Phase 0, milestone 0.2) is a one-file change: implement `CycleDataset` (e.g. point
@@ -47,10 +48,17 @@ public struct CSVCycleDataset: CycleDataset {
     }
 
     private let text: String
-    public init(text: String) { self.text = text }
-    public init(url: URL) throws { self.text = try String(contentsOf: url, encoding: .utf8) }
+    public init(text: String) {
+        self.text = text
+    }
 
-    public func load() throws -> [BenchmarkUser] { try Self.parse(text) }
+    public init(url: URL) throws {
+        text = try String(contentsOf: url, encoding: .utf8)
+    }
+
+    public func load() throws -> [BenchmarkUser] {
+        try Self.parse(text)
+    }
 
     /// Serialize users back to the canonical CSV format (handy for templates/round-trip tests).
     public static func serialize(_ users: [BenchmarkUser], userIDPrefix: String = "u") -> String {

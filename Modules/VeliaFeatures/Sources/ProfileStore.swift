@@ -11,7 +11,9 @@ public struct ProfileInfo: Codable, Identifiable, Sendable, Equatable {
     public var pinSalt: String?
     public var pinHash: String?
 
-    public var hasPIN: Bool { pinHash != nil }
+    public var hasPIN: Bool {
+        pinHash != nil
+    }
 }
 
 struct ProfileRegistry: Codable {
@@ -26,8 +28,13 @@ protocol RegistryPersistence: Sendable {
 }
 
 extension SecureStore: RegistryPersistence {
-    func loadRegistry() -> ProfileRegistry? { loadCodable(ProfileRegistry.self) }
-    func saveRegistry(_ registry: ProfileRegistry) { saveCodable(registry) }
+    func loadRegistry() -> ProfileRegistry? {
+        loadCodable(ProfileRegistry.self)
+    }
+
+    func saveRegistry(_ registry: ProfileRegistry) {
+        saveCodable(registry)
+    }
 }
 
 enum PINCrypto {
@@ -37,7 +44,9 @@ enum PINCrypto {
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 
-    static func newSalt() -> String { UUID().uuidString }
+    static func newSalt() -> String {
+        UUID().uuidString
+    }
 }
 
 /// Manages local profiles and the active profile's `CycleStore`. Switching profiles is
@@ -61,8 +70,10 @@ public final class ProfileStore {
     }
 
     /// Designated init — `registryStore` is injectable so tests avoid Keychain/disk.
-    init(registryStore: RegistryPersistence,
-         makeStore: @escaping (ProfileInfo) -> CycleStore) {
+    init(
+        registryStore: RegistryPersistence,
+        makeStore: @escaping (ProfileInfo) -> CycleStore
+    ) {
         self.registryStore = registryStore
         self.makeStore = makeStore
         var registry = registryStore.loadRegistry()
@@ -70,8 +81,13 @@ public final class ProfileStore {
 
         // First run: seed a default profile that inherits the legacy single-profile data file.
         if registry.profiles.isEmpty {
-            let def = ProfileInfo(id: UUID(), name: "", dataFile: "velia-state.enc",
-                                  pinSalt: nil, pinHash: nil)
+            let def = ProfileInfo(
+                id: UUID(),
+                name: "",
+                dataFile: "velia-state.enc",
+                pinSalt: nil,
+                pinHash: nil
+            )
             registry.profiles = [def]
             registry.lastActiveID = def.id
         }
@@ -84,9 +100,13 @@ public final class ProfileStore {
         }
     }
 
-    public var needsGate: Bool { current == nil }
+    public var needsGate: Bool {
+        current == nil
+    }
 
-    public func profile(_ id: UUID) -> ProfileInfo? { profiles.first { $0.id == id } }
+    public func profile(_ id: UUID) -> ProfileInfo? {
+        profiles.first { $0.id == id }
+    }
 
     /// Display name with a localized fallback for the unnamed default profile.
     public func displayName(_ info: ProfileInfo) -> String {
@@ -124,9 +144,13 @@ public final class ProfileStore {
 
     @discardableResult
     public func createProfile(name: String, pin: String?) -> ProfileInfo {
-        var info = ProfileInfo(id: UUID(), name: name,
-                               dataFile: "velia-state-\(UUID().uuidString).enc",
-                               pinSalt: nil, pinHash: nil)
+        var info = ProfileInfo(
+            id: UUID(),
+            name: name,
+            dataFile: "velia-state-\(UUID().uuidString).enc",
+            pinSalt: nil,
+            pinHash: nil
+        )
         if let pin, !pin.isEmpty { applyPIN(pin, to: &info) }
         profiles.append(info)
         persist()

@@ -15,8 +15,10 @@ struct AnalysisView: View {
                         ContentUnavailableView(
                             L2("Chưa đủ dữ liệu", "Not enough data"),
                             systemImage: "chart.bar.xaxis",
-                            description: Text(L2("Ghi ít nhất hai kỳ kinh để Velia phân tích chu kỳ của bạn.",
-                                                 "Log at least two periods for Velia to analyse your cycle."))
+                            description: Text(L2(
+                                "Ghi ít nhất hai kỳ kinh để Velia phân tích chu kỳ của bạn.",
+                                "Log at least two periods for Velia to analyse your cycle."
+                            ))
                         )
                         .padding(.top, 60)
                     } else {
@@ -54,19 +56,22 @@ struct AnalysisView: View {
 
     private func variabilityCard(_ lengths: [Int]) -> some View {
         let spread = (lengths.max() ?? 0) - (lengths.min() ?? 0)
-        let label: String
-        switch spread {
-        case 0...3: label = L2("Chu kỳ của bạn khá đều.", "Your cycle is fairly regular.")
-        case 4...7: label = L2("Chu kỳ dao động vừa phải.", "Your cycle varies moderately.")
-        default: label = L2("Chu kỳ khá thất thường — Velia sẽ giữ khoảng dự đoán rộng cho trung thực.",
-                            "Your cycle is quite irregular — Velia keeps a wider prediction range to stay honest.")
+        let label: String = switch spread {
+        case 0 ... 3: L2("Chu kỳ của bạn khá đều.", "Your cycle is fairly regular.")
+        case 4 ... 7: L2("Chu kỳ dao động vừa phải.", "Your cycle varies moderately.")
+        default: L2(
+                "Chu kỳ khá thất thường — Velia sẽ giữ khoảng dự đoán rộng cho trung thực.",
+                "Your cycle is quite irregular — Velia keeps a wider prediction range to stay honest."
+            )
         }
         return VStack(alignment: .leading, spacing: Theme.spacingSmall) {
             Label(L2("Mức dao động", "Variability"), systemImage: "waveform.path.ecg")
                 .font(.headline).foregroundStyle(Theme.accent)
-            Text(L2("Chênh lệch \(spread) ngày giữa chu kỳ ngắn nhất và dài nhất.",
-                    "\(spread) days between your shortest and longest cycle."))
-                .font(.subheadline)
+            Text(L2(
+                "Chênh lệch \(spread) ngày giữa chu kỳ ngắn nhất và dài nhất.",
+                "\(spread) days between your shortest and longest cycle."
+            ))
+            .font(.subheadline)
             Text(label).font(.caption).foregroundStyle(.secondary)
         }
         .veliaCard()
@@ -80,8 +85,10 @@ struct ContentTabView: View {
             ContentUnavailableView(
                 L2("Nội dung sắp ra mắt", "Content coming soon"),
                 systemImage: "book",
-                description: Text(L2("Bài viết về sức khỏe chu kỳ bằng tiếng Việt sẽ có trong bản cập nhật sau.",
-                                     "Vietnamese cycle-health articles are coming in a future update."))
+                description: Text(L2(
+                    "Bài viết về sức khỏe chu kỳ bằng tiếng Việt sẽ có trong bản cập nhật sau.",
+                    "Vietnamese cycle-health articles are coming in a future update."
+                ))
             )
             .background(Theme.screen)
             .navigationTitle(L2("Nội dung", "Content"))

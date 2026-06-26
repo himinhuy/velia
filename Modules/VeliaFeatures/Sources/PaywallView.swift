@@ -8,11 +8,22 @@ struct PaywallView: View {
     /// Forced gate (no dismiss) vs. upsell sheet (dismissible).
     var onClose: (() -> Void)?
 
-    private let benefits: [(String, String, String)] = [
-        ("infinity", "Toàn quyền sử dụng", "Full access to the app"),
-        ("chart.line.uptrend.xyaxis", "Dự đoán chu kỳ chính xác", "Accurate cycle predictions"),
-        ("lock.shield.fill", "Riêng tư tuyệt đối — dữ liệu chỉ trên máy", "Fully private — data stays on device"),
-        ("bell.badge.fill", "Nhắc nhở kỳ kinh & ghi nhật ký", "Period & logging reminders"),
+    private struct Benefit: Identifiable {
+        let icon: String, vi: String, en: String
+        var id: String {
+            icon
+        }
+    }
+
+    private let benefits: [Benefit] = [
+        Benefit(icon: "infinity", vi: "Toàn quyền sử dụng", en: "Full access to the app"),
+        Benefit(icon: "chart.line.uptrend.xyaxis", vi: "Dự đoán chu kỳ chính xác", en: "Accurate cycle predictions"),
+        Benefit(
+            icon: "lock.shield.fill",
+            vi: "Riêng tư tuyệt đối — dữ liệu chỉ trên máy",
+            en: "Fully private — data stays on device"
+        ),
+        Benefit(icon: "bell.badge.fill", vi: "Nhắc nhở kỳ kinh & ghi nhật ký", en: "Period & logging reminders")
     ]
 
     var body: some View {
@@ -33,16 +44,18 @@ struct PaywallView: View {
 
                 Image(systemName: "drop.fill").font(.system(size: 48)).foregroundStyle(Theme.accent)
                 Text(L2("Velia Premium", "Velia Premium")).font(.largeTitle.bold())
-                Text(L2("Tiếp tục sử dụng Velia đầy đủ sau khi hết hạn dùng thử 7 ngày.",
-                        "Keep full access to Velia after your 7-day free trial."))
-                    .font(.subheadline).foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                Text(L2(
+                    "Tiếp tục sử dụng Velia đầy đủ sau khi hết hạn dùng thử 7 ngày.",
+                    "Keep full access to Velia after your 7-day free trial."
+                ))
+                .font(.subheadline).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
 
                 VStack(alignment: .leading, spacing: Theme.spacing) {
-                    ForEach(benefits, id: \.0) { icon, vi, en in
+                    ForEach(benefits) { benefit in
                         HStack(spacing: 12) {
-                            Image(systemName: icon).foregroundStyle(Theme.accent).frame(width: 26)
-                            Text(L2(vi, en)).font(.subheadline)
+                            Image(systemName: benefit.icon).foregroundStyle(Theme.accent).frame(width: 26)
+                            Text(L2(benefit.vi, benefit.en)).font(.subheadline)
                             Spacer()
                         }
                     }
@@ -54,9 +67,11 @@ struct PaywallView: View {
                 VStack(spacing: 6) {
                     Text("\(SubscriptionManager.priceString) / \(L2("năm", "year"))")
                         .font(.system(.title2, design: .rounded).weight(.bold))
-                    Text(L2("Tự động gia hạn hằng năm · hủy bất cứ lúc nào",
-                            "Renews yearly · cancel anytime"))
-                        .font(.caption2).foregroundStyle(.secondary)
+                    Text(L2(
+                        "Tự động gia hạn hằng năm · hủy bất cứ lúc nào",
+                        "Renews yearly · cancel anytime"
+                    ))
+                    .font(.caption2).foregroundStyle(.secondary)
                 }
 
                 Button {
@@ -70,10 +85,12 @@ struct PaywallView: View {
                 .tint(Theme.accent)
                 .padding(.horizontal)
 
-                Text(L2("Thanh toán mô phỏng cục bộ (chưa tính phí thật).",
-                        "Local simulated purchase (no real charge)."))
-                    .font(.caption2).foregroundStyle(.tertiary)
-                    .padding(.bottom)
+                Text(L2(
+                    "Thanh toán mô phỏng cục bộ (chưa tính phí thật).",
+                    "Local simulated purchase (no real charge)."
+                ))
+                .font(.caption2).foregroundStyle(.tertiary)
+                .padding(.bottom)
             }
             .padding()
         }

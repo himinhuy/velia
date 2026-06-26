@@ -26,9 +26,9 @@ public struct RootView: View {
     public var body: some View {
         ZStack {
             if !auth.isAuthenticated {
-                AuthView()                    // must sign in / sign up first
+                AuthView() // must sign in / sign up first
             } else if subscription.needsPaywall {
-                PaywallView()                 // hard gate after the 7-day trial expires
+                PaywallView() // hard gate after the 7-day trial expires
             } else if let store = profiles.current {
                 mainContent(store)
             } else {
@@ -36,12 +36,12 @@ public struct RootView: View {
             }
 
             // App-switcher privacy cover: hide content whenever the scene isn't active.
-            if scenePhase != .active && !lock.isLocked {
+            if scenePhase != .active, !lock.isLocked {
                 Theme.screen.ignoresSafeArea()
                     .overlay(Image(systemName: "lock.fill").font(.largeTitle).foregroundStyle(.secondary))
             }
             // Biometric lock gate (opt-in) — only once signed in.
-            if lock.isLocked && auth.isAuthenticated {
+            if lock.isLocked, auth.isAuthenticated {
                 LockScreenView(lock: lock)
                     .transition(.opacity)
             }
@@ -84,13 +84,13 @@ public struct RootView: View {
             set: { trackDate = $0?.date }
         ), onDismiss: {
             Task { await reminders.apply(store: store) } // logging may have changed the prediction
-        }) { wrapper in
+        }, content: { wrapper in
             TrackSheet(store: store, selectedDate: wrapper.date)
-        }
+        })
     }
 
     @ViewBuilder
-    private func content(_ store: CycleStore) -> some View {
+    private func content(_: CycleStore) -> some View {
         switch tab {
         case .cycle: TodayView(trackDate: $trackDate)
         case .calendar: CalendarView(trackDate: $trackDate)
@@ -152,5 +152,7 @@ public struct RootView: View {
 /// Wrapper so a `Date` can drive a `.sheet(item:)`.
 private struct IdentifiableDate: Identifiable {
     let date: Date
-    var id: TimeInterval { date.timeIntervalSince1970 }
+    var id: TimeInterval {
+        date.timeIntervalSince1970
+    }
 }

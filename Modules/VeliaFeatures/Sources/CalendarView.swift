@@ -15,12 +15,13 @@ struct CalendarView: View {
         c.firstWeekday = 2 // Monday-first (VN)
         return c
     }
+
     private let weekdaySymbols = ["M", "T", "W", "T", "F", "S", "S"]
 
     /// Months from -6 … +6 around today.
     private var months: [Date] {
         let base = cal.startOfMonth(for: Date())
-        return (-6...6).compactMap { cal.date(byAdding: .month, value: $0, to: base) }
+        return (-6 ... 6).compactMap { cal.date(byAdding: .month, value: $0, to: base) }
     }
 
     var body: some View {
@@ -145,7 +146,7 @@ struct CalendarView: View {
                     Image(systemName: "circle.fill").font(.system(size: 7))
                         .foregroundStyle(.white.opacity(0.9))
                         .padding(4)
-                } else if s.hasLog && !s.period {
+                } else if s.hasLog, !s.period {
                     Circle().fill(Theme.accent).frame(width: 6, height: 6).padding(5)
                 }
                 Text("\(cal.component(.day, from: day))")
@@ -258,8 +259,8 @@ struct CalendarView: View {
     // MARK: Model — computed once (one prediction), shared by every cell
 
     struct CalModel {
-        var currentCompletion: ClosedRange<Date>?  // remaining expected days of the current period
-        var nextPeriod: ClosedRange<Date>?         // predicted next period, period-length band
+        var currentCompletion: ClosedRange<Date>? // remaining expected days of the current period
+        var nextPeriod: ClosedRange<Date>? // predicted next period, period-length band
         var fertile: DateInterval?
         var ovulationDay: Date?
     }
@@ -273,9 +274,9 @@ struct CalendarView: View {
         // Complete the current period up to `độ dài hành kinh` (muted continuation).
         if let lastRun = store.periodRuns().last {
             let expectedEnd = cal.date(byAdding: .day, value: periodLen - 1, to: lastRun.lowerBound)!
-            if expectedEnd > lastRun.upperBound && expectedEnd >= today {
+            if expectedEnd > lastRun.upperBound, expectedEnd >= today {
                 let from = cal.date(byAdding: .day, value: 1, to: lastRun.upperBound)!
-                m.currentCompletion = from...expectedEnd
+                m.currentCompletion = from ... expectedEnd
             }
         }
 
@@ -284,7 +285,7 @@ struct CalendarView: View {
         // Predicted next period: a period-length band starting at the expected start.
         let start = cal.startOfDay(for: p.pointDate)
         let end = cal.date(byAdding: .day, value: periodLen - 1, to: start)!
-        m.nextPeriod = start...end
+        m.nextPeriod = start ... end
 
         if let ov = p.ovulation {
             // A fixed ~6-day fertile window around the predicted ovulation day (the biological
@@ -293,8 +294,8 @@ struct CalendarView: View {
             let ovDay = cal.startOfDay(for: Date(timeIntervalSince1970:
                 (ov.start.timeIntervalSince1970 + ov.end.timeIntervalSince1970) / 2))
             m.ovulationDay = ovDay
-            let fStart = cal.date(byAdding: .day, value: -4, to: ovDay)!   // 5 days up to ovulation
-            let fEnd = cal.date(byAdding: .day, value: 1, to: ovDay)!      // + the day after
+            let fStart = cal.date(byAdding: .day, value: -4, to: ovDay)! // 5 days up to ovulation
+            let fEnd = cal.date(byAdding: .day, value: 1, to: ovDay)! // + the day after
             m.fertile = DateInterval(start: fStart, end: cal.date(byAdding: .day, value: 1, to: fEnd)!)
         }
         return m
@@ -309,7 +310,7 @@ struct CalendarView: View {
         let weekday = cal.component(.weekday, from: first)
         let lead = (weekday - cal.firstWeekday + 7) % 7
         var cells: [Date?] = Array(repeating: nil, count: lead)
-        for offset in 0..<range.count {
+        for offset in 0 ..< range.count {
             cells.append(cal.date(byAdding: .day, value: offset, to: first))
         }
         return cells
@@ -325,5 +326,7 @@ private extension Calendar {
 /// Wrapper so a tapped day can drive a `.sheet(item:)`.
 private struct CalDay: Identifiable {
     let date: Date
-    var id: TimeInterval { date.timeIntervalSince1970 }
+    var id: TimeInterval {
+        date.timeIntervalSince1970
+    }
 }
