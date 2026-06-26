@@ -52,7 +52,9 @@ public struct GRDBPeriodRepository: Repository {
     public typealias Element = PeriodRecord
     private let pool: DatabasePool
 
-    public init(database: AppDatabase) { pool = database.pool }
+    public init(database: AppDatabase) {
+        pool = database.pool
+    }
 
     public func all(includingDeleted: Bool) async throws -> [PeriodRecord] {
         try await pool.read { db in
@@ -87,7 +89,7 @@ public struct GRDBPeriodRepository: Repository {
         try await pool.write { db in
             for record in incoming {
                 if let existing = try PeriodRow.filter(Column("id") == record.id.uuidString).fetchOne(db) {
-                    let winner = LWW.resolve(existing.record, record)   // last-write-wins
+                    let winner = LWW.resolve(existing.record, record) // last-write-wins
                     try PeriodRow(winner).upsert(db)
                 } else {
                     try PeriodRow(record).insert(db)

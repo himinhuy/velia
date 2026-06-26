@@ -33,14 +33,16 @@ public final class CycleStore {
     private let cal = Calendar.current
     private let persistence: CyclePersistence?
 
-    public init(profile: UserProfile = UserProfile(),
-                periodDays: [PeriodRecord] = [],
-                symptoms: [SymptomRecord] = [],
-                hasOnboarded: Bool = false,
-                typicalPeriodLength: Int = 5,
-                mode: TrackingMode = .period,
-                fertility: [FertilityRecord] = [],
-                persistence: CyclePersistence? = nil) {
+    public init(
+        profile: UserProfile = UserProfile(),
+        periodDays: [PeriodRecord] = [],
+        symptoms: [SymptomRecord] = [],
+        hasOnboarded: Bool = false,
+        typicalPeriodLength: Int = 5,
+        mode: TrackingMode = .period,
+        fertility: [FertilityRecord] = [],
+        persistence: CyclePersistence? = nil
+    ) {
         self.profile = profile
         self.periodDays = periodDays
         self.symptoms = symptoms
@@ -51,9 +53,11 @@ public final class CycleStore {
         self.persistence = persistence
 
         if let saved = persistence?.load() {
-            self.profile = UserProfile(birthYear: saved.birthYear,
-                                       typicalCycleLength: saved.typicalCycleLength,
-                                       segment: Segment(rawValue: saved.segmentRaw) ?? .unknown)
+            self.profile = UserProfile(
+                birthYear: saved.birthYear,
+                typicalCycleLength: saved.typicalCycleLength,
+                segment: Segment(rawValue: saved.segmentRaw) ?? .unknown
+            )
             self.periodDays = saved.periodDays
             self.symptoms = saved.symptoms
             self.hasOnboarded = saved.hasOnboarded
@@ -96,19 +100,23 @@ public final class CycleStore {
             if let next = cal.date(byAdding: .day, value: 1, to: prev), cal.isDate(day, inSameDayAs: next) {
                 prev = day
             } else {
-                runs.append(runStart...prev)
+                runs.append(runStart ... prev)
                 runStart = day
                 prev = day
             }
         }
-        runs.append(runStart...prev)
+        runs.append(runStart ... prev)
         return runs
     }
 
     /// Cycle starts = first day of each run.
-    public var cycleStarts: [Date] { periodRuns().map(\.lowerBound) }
+    public var cycleStarts: [Date] {
+        periodRuns().map(\.lowerBound)
+    }
 
-    public var lastPeriodStart: Date? { cycleStarts.last }
+    public var lastPeriodStart: Date? {
+        cycleStarts.last
+    }
 
     private var history: [PeriodEvent] {
         cycleStarts.map { PeriodEvent(startDate: $0) }
@@ -135,14 +143,16 @@ public final class CycleStore {
         let ovulationDay = Int((cycleLen - 14).rounded())
         switch day {
         case ...5: return .menstrual
-        case 6..<(ovulationDay - 1): return .follicular
-        case (ovulationDay - 1)...(ovulationDay + 1): return .ovulatory
+        case 6 ..< (ovulationDay - 1): return .follicular
+        case (ovulationDay - 1) ... (ovulationDay + 1): return .ovulatory
         default: return .luteal
         }
     }
 
     /// Number of complete cycles informing the prediction (drives the "sharpens as you log" copy).
-    public var loggedCycleCount: Int { max(periodRuns().count - 1, 0) }
+    public var loggedCycleCount: Int {
+        max(periodRuns().count - 1, 0)
+    }
 
     // MARK: - Cycle statistics (for the Analysis screen)
 
@@ -179,8 +189,12 @@ public final class CycleStore {
             if let idx = periodDays.firstIndex(where: { cal.isDate($0.startDate, inSameDayAs: target) }) {
                 periodDays[idx].flow = flow
             } else {
-                periodDays.append(PeriodRecord(sync: SyncMetadata(deviceID: deviceID),
-                                               startDate: target, endDate: target, flow: flow))
+                periodDays.append(PeriodRecord(
+                    sync: SyncMetadata(deviceID: deviceID),
+                    startDate: target,
+                    endDate: target,
+                    flow: flow
+                ))
                 periodDays.sort { $0.startDate < $1.startDate }
             }
         } else {
@@ -197,7 +211,9 @@ public final class CycleStore {
         return day
     }
 
-    public func deletePeriodDay(on day: Date) { setFlow(on: day, flow: nil) }
+    public func deletePeriodDay(on day: Date) {
+        setFlow(on: day, flow: nil)
+    }
 
     public func togglePeriod(on day: Date) {
         setFlow(on: day, flow: isPeriodDay(on: day) ? nil : .medium)
@@ -219,8 +235,13 @@ public final class CycleStore {
         }) {
             symptoms.remove(at: idx)
         } else {
-            symptoms.append(SymptomRecord(sync: SyncMetadata(deviceID: deviceID),
-                                          date: target, type: category, value: 1, note: id))
+            symptoms.append(SymptomRecord(
+                sync: SyncMetadata(deviceID: deviceID),
+                date: target,
+                type: category,
+                value: 1,
+                note: id
+            ))
         }
         persist()
     }
@@ -232,8 +253,13 @@ public final class CycleStore {
         let already = isSymptomSelected(category, id, on: day)
         symptoms.removeAll { $0.type == category && cal.isDate($0.date, inSameDayAs: target) }
         if !already {
-            symptoms.append(SymptomRecord(sync: SyncMetadata(deviceID: deviceID),
-                                          date: target, type: category, value: 1, note: id))
+            symptoms.append(SymptomRecord(
+                sync: SyncMetadata(deviceID: deviceID),
+                date: target,
+                type: category,
+                value: 1,
+                note: id
+            ))
         }
         persist()
     }
@@ -251,8 +277,13 @@ public final class CycleStore {
         symptoms.removeAll { $0.type == "note" && cal.isDate($0.date, inSameDayAs: target) }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            symptoms.append(SymptomRecord(sync: SyncMetadata(deviceID: deviceID),
-                                          date: target, type: "note", value: 0, note: trimmed))
+            symptoms.append(SymptomRecord(
+                sync: SyncMetadata(deviceID: deviceID),
+                date: target,
+                type: "note",
+                value: 0,
+                note: trimmed
+            ))
         }
         persist()
     }
@@ -276,9 +307,13 @@ public final class CycleStore {
         let target = cal.startOfDay(for: day)
         fertility.removeAll { cal.isDate($0.date, inSameDayAs: target) }
         if bbtCelsius != nil || cervicalMucus != nil || lhTest != nil {
-            fertility.append(FertilityRecord(sync: SyncMetadata(deviceID: deviceID),
-                                             date: target, bbtCelsius: bbtCelsius,
-                                             cervicalMucus: cervicalMucus, lhTest: lhTest))
+            fertility.append(FertilityRecord(
+                sync: SyncMetadata(deviceID: deviceID),
+                date: target,
+                bbtCelsius: bbtCelsius,
+                cervicalMucus: cervicalMucus,
+                lhTest: lhTest
+            ))
         }
         persist()
     }
@@ -293,15 +328,19 @@ public final class CycleStore {
 
     // MARK: - Profile
 
-    public func completeOnboarding(mode: TrackingMode = .period, profile: UserProfile,
-                                   lastPeriodStart: Date?, periodLength: Int = 5) {
+    public func completeOnboarding(
+        mode: TrackingMode = .period,
+        profile: UserProfile,
+        lastPeriodStart: Date?,
+        periodLength: Int = 5
+    ) {
         self.mode = mode.isFunctional ? mode : .period
         self.profile = profile
-        self.typicalPeriodLength = min(max(periodLength, 1), 10)
+        typicalPeriodLength = min(max(periodLength, 1), 10)
         if let start = lastPeriodStart {
             // Seed the most recent period as a run of `periodLength` days for an accurate ring.
             let day0 = cal.startOfDay(for: start)
-            for offset in 0..<typicalPeriodLength {
+            for offset in 0 ..< typicalPeriodLength {
                 if let d = cal.date(byAdding: .day, value: offset, to: day0), d <= Date() {
                     addPeriod(start: d, flow: .medium)
                 }
@@ -312,9 +351,11 @@ public final class CycleStore {
     }
 
     public func updateProfile(typicalCycleLength: Int, segment: Segment, birthYear: Int?, periodLength: Int) {
-        profile = UserProfile(birthYear: birthYear,
-                              typicalCycleLength: typicalCycleLength,
-                              segment: segment)
+        profile = UserProfile(
+            birthYear: birthYear,
+            typicalCycleLength: typicalCycleLength,
+            segment: segment
+        )
         typicalPeriodLength = min(max(periodLength, 1), 10)
         persist()
     }

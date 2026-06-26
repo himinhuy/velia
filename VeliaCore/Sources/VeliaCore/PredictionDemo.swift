@@ -4,7 +4,6 @@ import Foundation
 /// on-device content to render for manual testing before tracking/storage UI exists (Phases 2–3).
 /// Pure & tested so the UI layer only renders.
 public enum PredictionDemo {
-
     /// Six recent cycles ending just before `asOf`, so the prediction points at the near future.
     public static func sampleHistory(asOf: Date = Date()) -> [PeriodEvent] {
         let lengths: [Double] = [29, 28, 30, 27, 29, 28]

@@ -4,22 +4,28 @@ import UIKit
 /// `setAlternateIconName`, but the home-screen *name* is fixed at build time — so a true neutral
 /// display name isn't possible without a separate build. We surface the neutral icon only.
 enum AppIconOption: String, CaseIterable, Identifiable {
-    case primary   // Velia rose ring
-    case neutral   // abstract "disguise"
+    case primary // Velia rose ring
+    case neutral // abstract "disguise"
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     /// nil = primary icon; otherwise the CFBundleAlternateIcons key.
-    var alternateName: String? { self == .neutral ? "Neutral" : nil }
+    var alternateName: String? {
+        self == .neutral ? "Neutral" : nil
+    }
 
     var label: String {
         switch self {
-        case .primary: return L2("Velia (mặc định)", "Velia (default)")
-        case .neutral: return L2("Trung tính (kín đáo)", "Neutral (discreet)")
+        case .primary: L2("Velia (mặc định)", "Velia (default)")
+        case .neutral: L2("Trung tính (kín đáo)", "Neutral (discreet)")
         }
     }
 
-    @MainActor static var supported: Bool { UIApplication.shared.supportsAlternateIcons }
+    @MainActor static var supported: Bool {
+        UIApplication.shared.supportsAlternateIcons
+    }
 
     @MainActor static var current: AppIconOption {
         UIApplication.shared.alternateIconName == "Neutral" ? .neutral : .primary

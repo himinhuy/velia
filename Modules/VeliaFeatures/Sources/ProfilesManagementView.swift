@@ -58,8 +58,10 @@ struct ProfilesManagementView: View {
                     }
                 }
             } footer: {
-                Text(L2("Mỗi hồ sơ có dữ liệu mã hóa riêng trên máy này. Vuốt để đổi tên hoặc xóa; nhấn giữ để đặt mã PIN.",
-                        "Each profile has its own encrypted data on this device. Swipe to rename or delete; long-press to set a PIN."))
+                Text(L2(
+                    "Mỗi hồ sơ có dữ liệu mã hóa riêng trên máy này. Vuốt để đổi tên hoặc xóa; nhấn giữ để đặt mã PIN.",
+                    "Each profile has its own encrypted data on this device. Swipe to rename or delete; long-press to set a PIN."
+                ))
             }
 
             Section {
@@ -94,7 +96,10 @@ struct ProfilesManagementView: View {
         .sheet(item: $settingPINFor) { info in
             PINEntryView(
                 title: L2("Đặt mã PIN", "Set PIN"),
-                subtitle: L2("4–6 chữ số cho \(profiles.displayName(info))", "4–6 digits for \(profiles.displayName(info))"),
+                subtitle: L2(
+                    "4–6 chữ số cho \(profiles.displayName(info))",
+                    "4–6 digits for \(profiles.displayName(info))"
+                ),
                 onSubmit: { pin in profiles.setPIN(pin, for: info.id); settingPINFor = nil; return true },
                 onCancel: { settingPINFor = nil }
             )

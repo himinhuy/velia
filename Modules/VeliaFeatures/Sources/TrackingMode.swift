@@ -14,8 +14,8 @@ public enum TrackingMode: String, CaseIterable, Sendable, Codable {
     /// Functional today vs. locked "coming soon".
     public var isFunctional: Bool {
         switch self {
-        case .period, .conceive, .noPeriod: return true
-        case .pregnancy, .perimenopause: return false
+        case .period, .conceive, .noPeriod: true
+        case .pregnancy, .perimenopause: false
         }
     }
 
@@ -26,26 +26,36 @@ public enum TrackingMode: String, CaseIterable, Sendable, Codable {
 
     var title: String {
         switch self {
-        case .period: return L2("Theo dõi kỳ kinh", "Track my period")
-        case .conceive: return L2("Đang muốn có thai", "Try to conceive")
-        case .noPeriod: return L2("Theo dõi không kinh nguyệt", "Track without a period")
-        case .pregnancy: return L2("Theo dõi thai kỳ", "Follow my pregnancy")
-        case .perimenopause: return L2("Theo dõi tiền mãn kinh", "Track perimenopause")
+        case .period: L2("Theo dõi kỳ kinh", "Track my period")
+        case .conceive: L2("Đang muốn có thai", "Try to conceive")
+        case .noPeriod: L2("Theo dõi không kinh nguyệt", "Track without a period")
+        case .pregnancy: L2("Theo dõi thai kỳ", "Follow my pregnancy")
+        case .perimenopause: L2("Theo dõi tiền mãn kinh", "Track perimenopause")
         }
     }
 
     var subtitle: String {
         switch self {
-        case .period: return L2("Ghi lại kỳ kinh và chu kỳ để nhận dự đoán.",
-                                "Log your period and cycle to get predictions.")
-        case .conceive: return L2("Theo dõi cửa sổ dễ thụ thai và các tín hiệu sinh sản.",
-                                  "Track your fertile window and fertility signals.")
-        case .noPeriod: return L2("Ghi lại các trải nghiệm lặp lại để nhận thông tin.",
-                                  "Log recurring experiences to get insights.")
-        case .pregnancy: return L2("Đồng hành cùng thai kỳ với nội dung theo tuần.",
-                                   "Follow your pregnancy with weekly content.")
-        case .perimenopause: return L2("Hiểu những thay đổi khi cơ thể chuyển sang mãn kinh.",
-                                       "Understand changes as your body nears menopause.")
+        case .period: L2(
+                "Ghi lại kỳ kinh và chu kỳ để nhận dự đoán.",
+                "Log your period and cycle to get predictions."
+            )
+        case .conceive: L2(
+                "Theo dõi cửa sổ dễ thụ thai và các tín hiệu sinh sản.",
+                "Track your fertile window and fertility signals."
+            )
+        case .noPeriod: L2(
+                "Ghi lại các trải nghiệm lặp lại để nhận thông tin.",
+                "Log recurring experiences to get insights."
+            )
+        case .pregnancy: L2(
+                "Đồng hành cùng thai kỳ với nội dung theo tuần.",
+                "Follow your pregnancy with weekly content."
+            )
+        case .perimenopause: L2(
+                "Hiểu những thay đổi khi cơ thể chuyển sang mãn kinh.",
+                "Understand changes as your body nears menopause."
+            )
         }
     }
 }

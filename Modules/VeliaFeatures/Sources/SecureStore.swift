@@ -52,12 +52,17 @@ public final class SecureStore: CyclePersistence, @unchecked Sendable {
 
     // MARK: CyclePersistence
 
-    public func load() -> PersistedState? { loadCodable(PersistedState.self) }
-    public func save(_ state: PersistedState) { saveCodable(state) }
+    public func load() -> PersistedState? {
+        loadCodable(PersistedState.self)
+    }
+
+    public func save(_ state: PersistedState) {
+        saveCodable(state)
+    }
 
     // MARK: Generic encrypted Codable (also used for the profile registry)
 
-    public func loadCodable<T: Decodable>(_ type: T.Type) -> T? {
+    public func loadCodable<T: Decodable>(_: T.Type) -> T? {
         guard let blob = try? Data(contentsOf: fileURL) else { return nil }
         do {
             let box = try AES.GCM.SealedBox(combined: blob)
@@ -68,7 +73,7 @@ public final class SecureStore: CyclePersistence, @unchecked Sendable {
         }
     }
 
-    public func saveCodable<T: Encodable>(_ value: T) {
+    public func saveCodable(_ value: some Encodable) {
         do {
             let clear = try JSONEncoder().encode(value)
             let sealed = try AES.GCM.seal(clear, using: key())
@@ -93,7 +98,7 @@ public final class SecureStore: CyclePersistence, @unchecked Sendable {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: keychainAccount,
             kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecMatchLimit as String: kSecMatchLimitOne
         ]
         var item: CFTypeRef?
         guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
@@ -108,7 +113,7 @@ public final class SecureStore: CyclePersistence, @unchecked Sendable {
             kSecAttrAccount as String: keychainAccount,
             kSecValueData as String: data,
             // Available after first unlock, never leaves this device, not in backups.
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
         SecItemDelete(attrs as CFDictionary)
         SecItemAdd(attrs as CFDictionary, nil)

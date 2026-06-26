@@ -2,12 +2,13 @@ import XCTest
 @testable import VeliaCore
 
 final class EngineTests: XCTestCase {
-
     private let epoch = Date(timeIntervalSince1970: 1_600_000_000)
 
     private func history(lengths: [Double]) -> [PeriodEvent] {
         var starts: [Date] = [epoch]
-        for l in lengths { starts.append(DayMath.add(days: l, to: starts.last!)) }
+        for l in lengths {
+            starts.append(DayMath.add(days: l, to: starts.last!))
+        }
         return starts.map { PeriodEvent(startDate: $0) }
     }
 
@@ -32,10 +33,10 @@ final class EngineTests: XCTestCase {
 
     // MARK: Golden cases
 
-    func testRegularCyclePredictsNearMean() {
+    func testRegularCyclePredictsNearMean() throws {
         let h = history(lengths: Array(repeating: 28, count: 8))
         let p = BayesianCyclePredictor().predict(history: h, profile: .init(segment: .typical), asOf: epoch)
-        let last = h.map(\.startDate).max()!
+        let last = try XCTUnwrap(h.map(\.startDate).max())
         let predictedLen = DayMath.daysBetween(last, p.pointDate)
         XCTAssertEqual(predictedLen, 28, accuracy: 1.5)
         XCTAssertEqual(p.mode, .normal)
@@ -64,20 +65,20 @@ final class EngineTests: XCTestCase {
         XCTAssertGreaterThan(DayMath.daysBetween(epoch, p.nextPeriod.start), 0)
     }
 
-    func testSkipCycleDoesNotPoisonMean() {
+    func testSkipCycleDoesNotPoisonMean() throws {
         // One anovulatory double-cycle should not drag the prediction toward 56.
         let h = history(lengths: [28, 28, 56, 28, 28])
         let p = BayesianCyclePredictor().predict(history: h, profile: .init(segment: .typical), asOf: epoch)
-        let last = h.map(\.startDate).max()!
+        let last = try XCTUnwrap(h.map(\.startDate).max())
         let predictedLen = DayMath.daysBetween(last, p.pointDate)
         XCTAssertLessThan(predictedLen, 36, "skip cycle poisoned the estimate")
     }
 
-    func testRecencyWeightingTracksLengtheningTrend() {
+    func testRecencyWeightingTracksLengtheningTrend() throws {
         // Cycles lengthening; prediction should lean toward recent (longer) values, not the overall mean.
         let h = history(lengths: [26, 28, 30, 33, 36, 39])
         let p = BayesianCyclePredictor().predict(history: h, profile: .init(segment: .perimenopause), asOf: epoch)
-        let last = h.map(\.startDate).max()!
+        let last = try XCTUnwrap(h.map(\.startDate).max())
         let predictedLen = DayMath.daysBetween(last, p.pointDate)
         let overallMean = Stats.mean([26, 28, 30, 33, 36, 39]) // ≈ 32
         XCTAssertGreaterThan(predictedLen, overallMean, "recency weighting not tracking the trend")
@@ -85,15 +86,18 @@ final class EngineTests: XCTestCase {
 
     // MARK: Property — invariants over random histories
 
-    func testNeverProducesInvalidInterval() {
+    func testNeverProducesInvalidInterval() throws {
         var rng = SeededRNG(seed: 7)
         let predictor = BayesianCyclePredictor()
-        for _ in 0..<500 {
-            let n = Int.random(in: 0...12, using: &rng)
-            let lengths = (0..<n).map { _ in Double(Int.random(in: 18...95, using: &rng)) }
-            let seg = Segment.allCases.randomElement(using: &rng)!
-            let p = predictor.predict(history: history(lengths: lengths),
-                                      profile: .init(segment: seg), asOf: epoch)
+        for _ in 0 ..< 500 {
+            let n = Int.random(in: 0 ... 12, using: &rng)
+            let lengths = (0 ..< n).map { _ in Double(Int.random(in: 18 ... 95, using: &rng)) }
+            let seg = try XCTUnwrap(Segment.allCases.randomElement(using: &rng))
+            let p = predictor.predict(
+                history: history(lengths: lengths),
+                profile: .init(segment: seg),
+                asOf: epoch
+            )
             XCTAssertLessThanOrEqual(p.nextPeriod.start, p.nextPeriod.end)
             XCTAssertFalse(p.pointDate.timeIntervalSince1970.isNaN)
             if let ov = p.ovulation { XCTAssertLessThanOrEqual(ov.start, ov.end) }
@@ -104,12 +108,24 @@ final class EngineTests: XCTestCase {
 
     func testEngineGate_beatsBaselinesAndIsCalibrated() {
         let users = SyntheticDataset.generate(seed: 42)
-        let bayes = Benchmark.evaluate(predictor: BayesianCyclePredictor(), name: "Bayesian",
-                                       users: users, onlyIrregular: true)
-        let naive = Benchmark.evaluate(predictor: Naive28Predictor(), name: "Naive28",
-                                       users: users, onlyIrregular: true)
-        let avg = Benchmark.evaluate(predictor: SimpleAveragePredictor(), name: "SimpleAvg",
-                                     users: users, onlyIrregular: true)
+        let bayes = Benchmark.evaluate(
+            predictor: BayesianCyclePredictor(),
+            name: "Bayesian",
+            users: users,
+            onlyIrregular: true
+        )
+        let naive = Benchmark.evaluate(
+            predictor: Naive28Predictor(),
+            name: "Naive28",
+            users: users,
+            onlyIrregular: true
+        )
+        let avg = Benchmark.evaluate(
+            predictor: SimpleAveragePredictor(),
+            name: "SimpleAvg",
+            users: users,
+            onlyIrregular: true
+        )
 
         XCTAssertLessThan(bayes.medianAbsError, naive.medianAbsError, "must beat naive-28 on irregular cycles")
         XCTAssertLessThan(bayes.medianAbsError, avg.medianAbsError, "must beat simple-average on irregular cycles")
@@ -141,7 +157,8 @@ final class EngineTests: XCTestCase {
 
     func testCSVDatasetRejectsBadInput() {
         XCTAssertThrowsError(try CSVCycleDataset.parse("user_id,segment,period_start\nu1,pcos")) // missing column
-        XCTAssertThrowsError(try CSVCycleDataset.parse("user_id,segment,period_start\nu1,martian,2023-01-01")) // bad segment
+        XCTAssertThrowsError(try CSVCycleDataset
+            .parse("user_id,segment,period_start\nu1,martian,2023-01-01")) // bad segment
         XCTAssertThrowsError(try CSVCycleDataset.parse("user_id,segment,period_start\nu1,pcos,01/01/2023")) // bad date
     }
 
@@ -184,7 +201,7 @@ final class EngineTests: XCTestCase {
         XCTAssertLessThan(typical.medWithinSD, 4)
         // Apple WHS 2025: PCOS mean ≈ 33–36, within-person SD ≈ 8–11.
         XCTAssertGreaterThan(pcos.meanLen, 31)
-        XCTAssertTrue((7...12).contains(pcos.medWithinSD), "PCOS within-person SD \(pcos.medWithinSD) outside 7–12")
+        XCTAssertTrue((7 ... 12).contains(pcos.medWithinSD), "PCOS within-person SD \(pcos.medWithinSD) outside 7–12")
         // STRAW+10: perimenopause variability elevated (≥7-day changes).
         XCTAssertGreaterThan(peri.medWithinSD, 6)
     }
@@ -200,8 +217,16 @@ final class EngineTests: XCTestCase {
 
     func testIrregularityClassifierFromData() {
         // Regular user: tight cycles → classified regular. Irregular user: high SD → irregular.
-        let regular = BenchmarkUser(segment: .unknown, history: history(lengths: [28, 29, 27, 28, 30]), isIrregular: false)
-        let irregular = BenchmarkUser(segment: .unknown, history: history(lengths: [24, 45, 30, 60, 28]), isIrregular: false)
+        let regular = BenchmarkUser(
+            segment: .unknown,
+            history: history(lengths: [28, 29, 27, 28, 30]),
+            isIrregular: false
+        )
+        let irregular = BenchmarkUser(
+            segment: .unknown,
+            history: history(lengths: [24, 45, 30, 60, 28]),
+            isIrregular: false
+        )
         let out = IrregularityClassifier.apply([regular, irregular]) // default STRAW threshold = 7d
         XCTAssertFalse(out[0].isIrregular)
         XCTAssertTrue(out[1].isIrregular)
@@ -210,10 +235,18 @@ final class EngineTests: XCTestCase {
     func testGateStableAcrossSeeds() {
         for seed: UInt64 in [1, 2, 3, 99] {
             let users = SyntheticDataset.generate(seed: seed)
-            let bayes = Benchmark.evaluate(predictor: BayesianCyclePredictor(), name: "Bayesian",
-                                           users: users, onlyIrregular: true)
-            let avg = Benchmark.evaluate(predictor: SimpleAveragePredictor(), name: "SimpleAvg",
-                                         users: users, onlyIrregular: true)
+            let bayes = Benchmark.evaluate(
+                predictor: BayesianCyclePredictor(),
+                name: "Bayesian",
+                users: users,
+                onlyIrregular: true
+            )
+            let avg = Benchmark.evaluate(
+                predictor: SimpleAveragePredictor(),
+                name: "SimpleAvg",
+                users: users,
+                onlyIrregular: true
+            )
             XCTAssertLessThan(bayes.medianAbsError, avg.medianAbsError, "seed \(seed): not robust")
         }
     }

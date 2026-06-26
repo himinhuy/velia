@@ -1,6 +1,6 @@
 import Foundation
-import Security
 import LocalAuthentication
+import Security
 
 // ⚠️ Phase 1 implementation target. Requires the iOS app build (Tuist/Xcode) — references the
 // Security & LocalAuthentication frameworks and is NOT compiled by the VeliaCore SwiftPM package.
@@ -41,7 +41,7 @@ public struct DatabaseKeyProvider {
     public func destroyKey() throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: keychainAccount,
+            kSecAttrAccount as String: keychainAccount
         ]
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
@@ -71,8 +71,8 @@ public struct DatabaseKeyProvider {
                 kSecAttrIsPermanent as String: true,
                 kSecAttrApplicationTag as String: enclaveTag,
                 kSecAttrAccessControl as String: access,
-                kSecUseAuthenticationContext as String: context,
-            ],
+                kSecUseAuthenticationContext as String: context
+            ]
         ]
         guard let key = SecKeyCreateRandomKey(attributes as CFDictionary, &error) else {
             throw DatabaseKeyError.enclaveUnavailable
@@ -85,7 +85,7 @@ public struct DatabaseKeyProvider {
             kSecClass as String: kSecClassKey,
             kSecAttrApplicationTag as String: enclaveTag,
             kSecAttrKeyType as String: kSecAttrKeyTypeECSECPrimeRandom,
-            kSecReturnRef as String: true,
+            kSecReturnRef as String: true
         ]
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
@@ -119,7 +119,7 @@ public struct DatabaseKeyProvider {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: keychainAccount,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-            kSecValueData as String: data,
+            kSecValueData as String: data
         ]
         SecItemDelete(query as CFDictionary)
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -131,7 +131,7 @@ public struct DatabaseKeyProvider {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: keychainAccount,
             kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecMatchLimit as String: kSecMatchLimitOne
         ]
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)

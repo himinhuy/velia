@@ -42,7 +42,7 @@ if let i = args.firstIndex(of: "--csv"), i + 1 < args.count {
     sourceLabel = "synthetic (seed \(seed))"
 }
 
-// For unlabeled datasets, derive the "irregular" subset from observed cycle variability.
+/// For unlabeled datasets, derive the "irregular" subset from observed cycle variability.
 let users: [BenchmarkUser]
 if let i = args.firstIndex(of: "--irregular-from-data") {
     let thr = (i + 1 < args.count ? Double(args[i + 1]) : nil) ?? IrregularityClassifier.strawThresholdDays
@@ -55,11 +55,16 @@ if let i = args.firstIndex(of: "--irregular-from-data") {
 let predictors: [(String, CyclePredictor)] = [
     ("Naive28", Naive28Predictor()),
     ("SimpleAvg", SimpleAveragePredictor()),
-    ("Bayesian", BayesianCyclePredictor()),
+    ("Bayesian", BayesianCyclePredictor())
 ]
 
-func pad(_ s: String, _ n: Int) -> String { s.count >= n ? s : s + String(repeating: " ", count: n - s.count) }
-func fmt(_ x: Double) -> String { String(format: "%6.2f", x) }
+func pad(_ s: String, _ n: Int) -> String {
+    s.count >= n ? s : s + String(repeating: " ", count: n - s.count)
+}
+
+func fmt(_ x: Double) -> String {
+    String(format: "%6.2f", x)
+}
 
 print("Velia — Phase 0 engine benchmark [\(sourceLabel)]")
 print("Users: \(users.count) | irregular: \(users.filter(\.isIrregular).count)\n")
@@ -74,7 +79,7 @@ func table(onlyIrregular: Bool) -> [String: BenchmarkMetrics] {
         results[name] = m
         let cov = "\(fmt(m.coverage * 100))% / \(Int(m.coverageTarget * 100))%"
         print(pad(name, 12) + pad("\(m.count)", 7) + pad(fmt(m.medianAbsError), 8)
-              + pad(fmt(m.meanAbsError), 8) + pad(cov, 12))
+            + pad(fmt(m.meanAbsError), 8) + pad(cov, 12))
     }
     print("")
     return results
@@ -92,11 +97,11 @@ let wellCalibrated = abs(bayes.coverage - bayes.coverageTarget) <= calibrationTo
 
 print("== GATE ==")
 print("[\(beatsNaive ? "PASS" : "FAIL")] Bayesian beats Naive28 on irregular median AE "
-      + "(\(fmt(bayes.medianAbsError)) < \(fmt(irr["Naive28"]!.medianAbsError)))")
+    + "(\(fmt(bayes.medianAbsError)) < \(fmt(irr["Naive28"]!.medianAbsError)))")
 print("[\(beatsAvg ? "PASS" : "FAIL")] Bayesian beats SimpleAvg on irregular median AE "
-      + "(\(fmt(bayes.medianAbsError)) < \(fmt(irr["SimpleAvg"]!.medianAbsError)))")
+    + "(\(fmt(bayes.medianAbsError)) < \(fmt(irr["SimpleAvg"]!.medianAbsError)))")
 print("[\(wellCalibrated ? "PASS" : "FAIL")] Interval calibration within ±\(Int(calibrationTol * 100))pp of target "
-      + "(\(fmt(bayes.coverage * 100))% vs \(Int(bayes.coverageTarget * 100))%)")
+    + "(\(fmt(bayes.coverage * 100))% vs \(Int(bayes.coverageTarget * 100))%)")
 
 let go = beatsNaive && beatsAvg && wellCalibrated
 print("\nDECISION: \(go ? "GO ✅" : "NO-GO ❌")")

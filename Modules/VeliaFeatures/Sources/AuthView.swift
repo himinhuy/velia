@@ -68,10 +68,12 @@ struct AuthView: View {
                 .buttonStyle(.bordered)
                 .tint(.primary)
 
-                Text(L2("Tài khoản & mật khẩu được mã hóa, lưu trên máy — không máy chủ.",
-                        "Account & password are encrypted on-device — no server."))
-                    .font(.caption2).foregroundStyle(.tertiary)
-                    .multilineTextAlignment(.center)
+                Text(L2(
+                    "Tài khoản & mật khẩu được mã hóa, lưu trên máy — không máy chủ.",
+                    "Account & password are encrypted on-device — no server."
+                ))
+                .font(.caption2).foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
                 Spacer(minLength: 20)
             }
             .padding()
@@ -81,17 +83,24 @@ struct AuthView: View {
         .alert(L2("Sắp ra mắt", "Coming soon"), isPresented: $showAppleNote) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(L2("Đăng nhập với Apple cần tài khoản Apple Developer trả phí. Hãy dùng email & mật khẩu.",
-                    "Sign in with Apple requires a paid Apple Developer account. Please use email & password for now."))
+            Text(L2(
+                "Đăng nhập với Apple cần tài khoản Apple Developer trả phí. Hãy dùng email & mật khẩu.",
+                "Sign in with Apple requires a paid Apple Developer account. Please use email & password for now."
+            ))
         }
     }
 
-    private var line: some View { Rectangle().fill(.secondary.opacity(0.3)).frame(height: 1) }
+    private var line: some View {
+        Rectangle().fill(.secondary.opacity(0.3)).frame(height: 1)
+    }
 
     private func field(_ placeholder: String, text: Binding<String>, secure: Bool) -> some View {
         Group {
-            if secure { SecureField(placeholder, text: text) }
-            else { TextField(placeholder, text: text) }
+            if secure {
+                SecureField(placeholder, text: text)
+            } else {
+                TextField(placeholder, text: text)
+            }
         }
         .padding()
         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
@@ -109,7 +118,7 @@ struct AuthView: View {
             }
             result = auth.signUp(email: email, password: password)
         }
-        if case .failure(let e) = result { error = e.message }
+        if case let .failure(e) = result { error = e.message }
         // On success the auth gate switches to the app automatically.
     }
 }
@@ -131,8 +140,10 @@ private struct ForgotPasswordView: View {
                         .keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
                     SecureField(L2("Mật khẩu mới", "New password"), text: $newPassword)
                 } footer: {
-                    Text(L2("Vì dữ liệu chỉ ở trên máy, bạn đặt lại mật khẩu ngay tại đây (không qua email).",
-                            "Since data is on-device, you reset the password right here (no email link)."))
+                    Text(L2(
+                        "Vì dữ liệu chỉ ở trên máy, bạn đặt lại mật khẩu ngay tại đây (không qua email).",
+                        "Since data is on-device, you reset the password right here (no email link)."
+                    ))
                 }
                 if let error { Text(error).foregroundStyle(.red).font(.footnote) }
                 if done { Text(L2("Đã đặt lại mật khẩu.", "Password reset.")).foregroundStyle(.green).font(.footnote) }
@@ -145,7 +156,7 @@ private struct ForgotPasswordView: View {
                     Button(L2("Đặt lại", "Reset")) {
                         switch auth.resetPassword(email: email, newPassword: newPassword) {
                         case .success: error = nil; done = true
-                        case .failure(let e): error = e.message
+                        case let .failure(e): error = e.message
                         }
                     }.tint(Theme.accent)
                 }

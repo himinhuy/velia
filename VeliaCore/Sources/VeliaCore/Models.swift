@@ -60,8 +60,14 @@ public struct Prediction: Sendable, Equatable {
     /// Two-sided coverage the interval is calibrated for, e.g. 0.80.
     public let intervalCoverageTarget: Double
 
-    public init(nextPeriod: DateInterval, ovulation: DateInterval?, cyclePhase: CyclePhase,
-                confidence: ConfidenceLevel, mode: PredictionMode, intervalCoverageTarget: Double) {
+    public init(
+        nextPeriod: DateInterval,
+        ovulation: DateInterval?,
+        cyclePhase: CyclePhase,
+        confidence: ConfidenceLevel,
+        mode: PredictionMode,
+        intervalCoverageTarget: Double
+    ) {
         self.nextPeriod = nextPeriod
         self.ovulation = ovulation
         self.cyclePhase = cyclePhase
@@ -80,7 +86,7 @@ public struct Prediction: Sendable, Equatable {
 // MARK: - Date helpers
 
 public enum DayMath {
-    public static let secondsPerDay: TimeInterval = 86_400
+    public static let secondsPerDay: TimeInterval = 86400
 
     public static func add(days: Double, to date: Date) -> Date {
         date.addingTimeInterval(days * secondsPerDay)

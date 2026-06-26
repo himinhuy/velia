@@ -11,8 +11,13 @@ public enum AppLanguage: String, CaseIterable, Sendable {
     /// from non-isolated provider code (formatters, model builders).
     nonisolated(unsafe) static var current: AppLanguage = .vi
 
-    var label: String { self == .vi ? "Tiếng Việt" : "English" }
-    var localeIdentifier: String { self == .vi ? "vi_VN" : "en_US" }
+    var label: String {
+        self == .vi ? "Tiếng Việt" : "English"
+    }
+
+    var localeIdentifier: String {
+        self == .vi ? "vi_VN" : "en_US"
+    }
 }
 
 /// Inline bilingual string: the Vietnamese and English variants live together at the call site,

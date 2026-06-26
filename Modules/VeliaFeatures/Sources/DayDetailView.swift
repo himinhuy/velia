@@ -38,7 +38,10 @@ struct DayDetailView: View {
                     chipRow(L2("Cơn đau", "Pain"), selected(TrackCatalog.painCategory, TrackCatalog.pains))
                     chipRow(L2("Năng lượng", "Energy"), selected(TrackCatalog.energyCategory, TrackCatalog.energy))
                     chipRow(L2("Giấc ngủ", "Sleep"), selected(TrackCatalog.sleepCategory, TrackCatalog.sleep))
-                    chipRow(L2("Dịch tiết", "Discharge"), selected(TrackCatalog.dischargeCategory, TrackCatalog.discharge))
+                    chipRow(
+                        L2("Dịch tiết", "Discharge"),
+                        selected(TrackCatalog.dischargeCategory, TrackCatalog.discharge)
+                    )
                     chipRow(L2("Quan hệ", "Sex"), selected(TrackCatalog.sexCategory, TrackCatalog.sex))
 
                     if !fertilityBits.isEmpty {

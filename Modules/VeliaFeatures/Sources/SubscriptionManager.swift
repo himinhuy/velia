@@ -28,9 +28,11 @@ public final class SubscriptionManager {
     private var trialStart: Date {
         didSet { defaults.set(trialStart.timeIntervalSince1970, forKey: Keys.trialStart) }
     }
+
     public private(set) var isSubscribed: Bool {
         didSet { defaults.set(isSubscribed, forKey: Keys.subscribed) }
     }
+
     public private(set) var renewalDate: Date? {
         didSet { defaults.set(renewalDate?.timeIntervalSince1970 ?? 0, forKey: Keys.renewal) }
     }
@@ -58,12 +60,20 @@ public final class SubscriptionManager {
     }
 
     public var trialDaysLeft: Int {
-        max(0, Int(ceil(trialEnd.timeIntervalSinceNow / 86_400)))
+        max(0, Int(ceil(trialEnd.timeIntervalSinceNow / 86400)))
     }
 
-    public var isTrialActive: Bool { !isSubscribed && Date() < trialEnd }
-    public var hasAccess: Bool { isSubscribed || isTrialActive }
-    public var needsPaywall: Bool { !hasAccess }
+    public var isTrialActive: Bool {
+        !isSubscribed && Date() < trialEnd
+    }
+
+    public var hasAccess: Bool {
+        isSubscribed || isTrialActive
+    }
+
+    public var needsPaywall: Bool {
+        !hasAccess
+    }
 
     public var status: Status {
         if isSubscribed { return .premium(renewal: renewalDate ?? oneYearOut()) }

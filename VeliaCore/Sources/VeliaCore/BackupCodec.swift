@@ -1,7 +1,8 @@
-import Foundation
 import CryptoKit
+import Foundation
 
 // MARK: - Encrypted export / import codec (pure, testable)
+
 //
 // Implements the MVP "one-tap encrypted export" + import (prd.md §5.1, architecture.md §4).
 // The codec seals a serialized payload with AES-GCM. It is intentionally KDF-agnostic: callers pass
@@ -12,8 +13,8 @@ import CryptoKit
 public struct EncryptedBackup: Codable, Sendable, Equatable {
     public let version: Int
     public let createdAt: Date
-    public let salt: Data    // for the caller's passphrase KDF
-    public let sealed: Data  // AES.GCM combined box: nonce ‖ ciphertext ‖ tag
+    public let salt: Data // for the caller's passphrase KDF
+    public let sealed: Data // AES.GCM combined box: nonce ‖ ciphertext ‖ tag
 }
 
 public enum BackupError: Error, Equatable {
@@ -25,10 +26,12 @@ public enum BackupCodec {
     public static let currentVersion = 1
 
     /// Encrypt + serialize a Codable payload into a portable backup blob.
-    public static func export<T: Encodable>(_ value: T,
-                                            key: SymmetricKey,
-                                            salt: Data = randomBytes(16),
-                                            now: Date = Date()) throws -> Data {
+    public static func export(
+        _ value: some Encodable,
+        key: SymmetricKey,
+        salt: Data = randomBytes(16),
+        now: Date = Date()
+    ) throws -> Data {
         let plaintext = try JSONEncoder().encode(value)
         let box = try AES.GCM.seal(plaintext, using: key)
         guard let combined = box.combined else { throw BackupError.sealFailed }
@@ -37,7 +40,7 @@ public enum BackupCodec {
     }
 
     /// Decrypt + decode a backup blob. Throws on wrong key or tampering (AES-GCM auth failure).
-    public static func importBackup<T: Decodable>(_ data: Data, key: SymmetricKey, as type: T.Type) throws -> T {
+    public static func importBackup<T: Decodable>(_ data: Data, key: SymmetricKey, as _: T.Type) throws -> T {
         let envelope = try JSONDecoder().decode(EncryptedBackup.self, from: data)
         guard envelope.version <= currentVersion else {
             throw BackupError.unsupportedVersion(envelope.version)

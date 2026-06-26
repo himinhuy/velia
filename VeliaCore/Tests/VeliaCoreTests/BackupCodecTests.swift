@@ -1,12 +1,11 @@
-import XCTest
 import CryptoKit
+import XCTest
 @testable import VeliaCore
 
 final class BackupCodecTests: XCTestCase {
-
     private func samplePeriods() -> [PeriodRecord] {
         let device = UUID()
-        return (0..<3).map { i in
+        return (0 ..< 3).map { i in
             PeriodRecord(
                 sync: SyncMetadata(updatedAt: Date(timeIntervalSince1970: Double(i)), deviceID: device),
                 startDate: Date(timeIntervalSince1970: Double(i) * 1000),
@@ -44,7 +43,7 @@ final class BackupCodecTests: XCTestCase {
         let blob = try BackupCodec.export(samplePeriods(), key: key, salt: salt)
         let header = try BackupCodec.header(blob)
         XCTAssertEqual(header.version, BackupCodec.currentVersion)
-        XCTAssertEqual(header.salt, salt)            // salt recoverable for passphrase KDF
+        XCTAssertEqual(header.salt, salt) // salt recoverable for passphrase KDF
     }
 
     func testRandomBytesLengthAndEntropy() {

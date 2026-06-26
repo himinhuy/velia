@@ -12,8 +12,13 @@ struct CycleRingView: View {
     private let size: CGFloat = 300
     private let lineWidth: CGFloat = 24
 
-    private var radius: CGFloat { (size - lineWidth) / 2 }
-    private var center: CGPoint { CGPoint(x: size / 2, y: size / 2) }
+    private var radius: CGFloat {
+        (size - lineWidth) / 2
+    }
+
+    private var center: CGPoint {
+        CGPoint(x: size / 2, y: size / 2)
+    }
 
     // Match the calendar: rose period + teal fertile; the rest is the neutral track.
     private let periodColor = Theme.accent
@@ -64,7 +69,7 @@ struct CycleRingView: View {
     // MARK: Dots
 
     private var dayTicks: some View {
-        ForEach(1...model.cycleLength, id: \.self) { day in
+        ForEach(1 ... model.cycleLength, id: \.self) { day in
             Circle()
                 .fill(.white.opacity(0.18))
                 .frame(width: 3, height: 3)
@@ -125,9 +130,11 @@ struct CycleRingView: View {
     }
 
     private func point(day: Int, atRadius r: CGFloat) -> CGPoint {
-        let angle = Double(fraction(day)) * 2 * .pi   // 0 at top
-        return CGPoint(x: center.x + r * CGFloat(sin(angle)),
-                       y: center.y - r * CGFloat(cos(angle)))
+        let angle = Double(fraction(day)) * 2 * .pi // 0 at top
+        return CGPoint(
+            x: center.x + r * CGFloat(sin(angle)),
+            y: center.y - r * CGFloat(cos(angle))
+        )
     }
 }
 
@@ -152,8 +159,10 @@ struct CycleRingModel {
         switch daysUntilNextPeriod {
         case 0: return L2("Kỳ kinh dự kiến hôm nay", "Period expected today")
         case 1: return L2("Còn 1 ngày đến kỳ kinh", "1 day until your next period")
-        default: return L2("Còn \(daysUntilNextPeriod) ngày đến kỳ kinh",
-                           "\(daysUntilNextPeriod) days until your next period")
+        default: return L2(
+                "Còn \(daysUntilNextPeriod) ngày đến kỳ kinh",
+                "\(daysUntilNextPeriod) days until your next period"
+            )
         }
     }
 
@@ -166,11 +175,20 @@ struct CycleRingModel {
 
         guard let prediction = store.prediction,
               let currentDay = store.cycleDay(),
-              let lastStart = store.lastPeriodStart else {
+              let lastStart = store.lastPeriodStart
+        else {
             let len = store.profile.typicalCycleLength ?? 28
-            return CycleRingModel(hasData: false, cycleLength: len, currentDay: 1, periodLength: 5,
-                                  daysUntilNextPeriod: 0, ovulationDay: nil, ovulationRange: nil,
-                                  phaseName: phase, todayString: todayStr)
+            return CycleRingModel(
+                hasData: false,
+                cycleLength: len,
+                currentDay: 1,
+                periodLength: 5,
+                daysUntilNextPeriod: 0,
+                ovulationDay: nil,
+                ovulationRange: nil,
+                phaseName: phase,
+                todayString: todayStr
+            )
         }
 
         // Use the point estimate (midpoint of the next-period window) so the ring agrees with the
@@ -193,8 +211,8 @@ struct CycleRingModel {
                 (ov.start.timeIntervalSince1970 + ov.end.timeIntervalSince1970) / 2)
             let center = Int(DayMath.daysBetween(lastStart, mid).rounded()) + 1
             let lo = min(max(center - 4, periodLength + 1), cycleLength) // 5 days up to ovulation
-            let hi = min(max(center + 1, lo), cycleLength)               // + the day after
-            ovRange = lo...hi
+            let hi = min(max(center + 1, lo), cycleLength) // + the day after
+            ovRange = lo ... hi
             ovDay = min(max(center, lo), hi)
         }
 

@@ -20,14 +20,38 @@ struct TrackSheet: View {
                     VStack(alignment: .leading, spacing: Theme.spacingLarge) {
                         flowSection
                         if store.mode == .conceive { fertilitySection }
-                        symptomSection(L2("Cảm xúc", "Feelings"), category: TrackCatalog.feelingCategory, items: TrackCatalog.feelings)
-                        symptomSection(L2("Cơn đau", "Pain"), category: TrackCatalog.painCategory, items: TrackCatalog.pains)
-                        exclusiveSection(L2("Năng lượng", "Energy"), category: TrackCatalog.energyCategory, items: TrackCatalog.energy)
-                        exclusiveSection(L2("Giấc ngủ", "Sleep"), category: TrackCatalog.sleepCategory, items: TrackCatalog.sleep)
+                        symptomSection(
+                            L2("Cảm xúc", "Feelings"),
+                            category: TrackCatalog.feelingCategory,
+                            items: TrackCatalog.feelings
+                        )
+                        symptomSection(
+                            L2("Cơn đau", "Pain"),
+                            category: TrackCatalog.painCategory,
+                            items: TrackCatalog.pains
+                        )
+                        exclusiveSection(
+                            L2("Năng lượng", "Energy"),
+                            category: TrackCatalog.energyCategory,
+                            items: TrackCatalog.energy
+                        )
+                        exclusiveSection(
+                            L2("Giấc ngủ", "Sleep"),
+                            category: TrackCatalog.sleepCategory,
+                            items: TrackCatalog.sleep
+                        )
                         if store.mode != .conceive {
-                            exclusiveSection(L2("Dịch tiết", "Discharge"), category: TrackCatalog.dischargeCategory, items: TrackCatalog.discharge)
+                            exclusiveSection(
+                                L2("Dịch tiết", "Discharge"),
+                                category: TrackCatalog.dischargeCategory,
+                                items: TrackCatalog.discharge
+                            )
                         }
-                        exclusiveSection(L2("Quan hệ", "Sex"), category: TrackCatalog.sexCategory, items: TrackCatalog.sex)
+                        exclusiveSection(
+                            L2("Quan hệ", "Sex"),
+                            category: TrackCatalog.sexCategory,
+                            items: TrackCatalog.sex
+                        )
                         noteField
                     }
                     .padding()
@@ -64,7 +88,7 @@ struct TrackSheet: View {
     // MARK: Date strip
 
     private var dateStrip: some View {
-        let days = (-14...7).compactMap { cal.date(byAdding: .day, value: $0, to: Date()) }
+        let days = (-14 ... 7).compactMap { cal.date(byAdding: .day, value: $0, to: Date()) }
         return ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -121,10 +145,10 @@ struct TrackSheet: View {
 
     private func flowSymbol(_ f: FlowIntensity) -> String {
         switch f {
-        case .spotting: return "circle.hexagongrid.fill"
-        case .light: return "drop"
-        case .medium: return "drop.fill"
-        case .heavy: return "drop.fill"
+        case .spotting: "circle.hexagongrid.fill"
+        case .light: "drop"
+        case .medium: "drop.fill"
+        case .heavy: "drop.fill"
         }
     }
 
@@ -151,16 +175,27 @@ struct TrackSheet: View {
     // MARK: Fertility signals (conceive mode) — logging only, Tier-1
 
     private var mucusOptions: [(String?, String)] {
-        [(nil, L2("Không ghi", "Not logged")), ("dry", L2("Khô", "Dry")), ("sticky", L2("Dính", "Sticky")),
-         ("creamy", L2("Kem", "Creamy")), ("eggwhite", L2("Trứng sống / dai", "Egg-white / stretchy")),
-         ("watery", L2("Ướt", "Watery"))]
-    }
-    private var lhOptions: [(String?, String)] {
-        [(nil, L2("Không ghi", "Not logged")), ("negative", L2("Âm tính", "Negative")),
-         ("peak", L2("Đỉnh (dương tính)", "Peak (positive)"))]
+        [
+            (nil, L2("Không ghi", "Not logged")),
+            ("dry", L2("Khô", "Dry")),
+            ("sticky", L2("Dính", "Sticky")),
+            ("creamy", L2("Kem", "Creamy")),
+            ("eggwhite", L2("Trứng sống / dai", "Egg-white / stretchy")),
+            ("watery", L2("Ướt", "Watery"))
+        ]
     }
 
-    private func entry() -> FertilityRecord? { store.fertilityEntry(on: selectedDate) }
+    private var lhOptions: [(String?, String)] {
+        [
+            (nil, L2("Không ghi", "Not logged")),
+            ("negative", L2("Âm tính", "Negative")),
+            ("peak", L2("Đỉnh (dương tính)", "Peak (positive)"))
+        ]
+    }
+
+    private func entry() -> FertilityRecord? {
+        store.fertilityEntry(on: selectedDate)
+    }
 
     private var fertilitySection: some View {
         VStack(alignment: .leading, spacing: Theme.spacing) {
@@ -175,19 +210,27 @@ struct TrackSheet: View {
                 if let bbt = entry()?.bbtCelsius {
                     Stepper(String(format: "%.2f °C", bbt), value: Binding(
                         get: { bbt }, set: { writeBBT($0) }
-                    ), in: 35.0...38.5, step: 0.05)
+                    ), in: 35.0 ... 38.5, step: 0.05)
                 }
             }
             .padding().background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
 
-            pickerRow(L2("Dịch nhầy cổ tử cung", "Cervical mucus"), options: mucusOptions,
-                      selected: entry()?.cervicalMucus) { writeMucus($0) }
-            pickerRow(L2("Que thử LH", "LH test"), options: lhOptions,
-                      selected: entry()?.lhTest) { writeLH($0) }
+            pickerRow(
+                L2("Dịch nhầy cổ tử cung", "Cervical mucus"),
+                options: mucusOptions,
+                selected: entry()?.cervicalMucus
+            ) { writeMucus($0) }
+            pickerRow(
+                L2("Que thử LH", "LH test"),
+                options: lhOptions,
+                selected: entry()?.lhTest
+            ) { writeLH($0) }
 
-            Text(L2("Velia không phải công cụ tránh thai hay chẩn đoán y khoa. Hãy tham khảo ý kiến bác sĩ.",
-                    "Velia is not a contraceptive or medical-diagnosis tool. Please consult a doctor."))
-                .font(.caption2).foregroundStyle(.secondary)
+            Text(L2(
+                "Velia không phải công cụ tránh thai hay chẩn đoán y khoa. Hãy tham khảo ý kiến bác sĩ.",
+                "Velia is not a contraceptive or medical-diagnosis tool. Please consult a doctor."
+            ))
+            .font(.caption2).foregroundStyle(.secondary)
         }
     }
 
@@ -220,14 +263,18 @@ struct TrackSheet: View {
                 get: { store.note(on: selectedDate) },
                 set: { store.setNote($0, on: selectedDate) }
             ), axis: .vertical)
-            .lineLimit(2...5)
-            .padding()
-            .background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+                .lineLimit(2 ... 5)
+                .padding()
+                .background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
         }
     }
 
-    private func pickerRow(_ title: String, options: [(String?, String)],
-                           selected: String?, set: @escaping (String?) -> Void) -> some View {
+    private func pickerRow(
+        _ title: String,
+        options: [(String?, String)],
+        selected: String?,
+        set: @escaping (String?) -> Void
+    ) -> some View {
         HStack {
             Text(title).font(.subheadline)
             Spacer()
@@ -247,10 +294,12 @@ struct TrackSheet: View {
         let e = entry()
         store.setFertility(on: selectedDate, bbtCelsius: v, cervicalMucus: e?.cervicalMucus, lhTest: e?.lhTest)
     }
+
     private func writeMucus(_ v: String?) {
         let e = entry()
         store.setFertility(on: selectedDate, bbtCelsius: e?.bbtCelsius, cervicalMucus: v, lhTest: e?.lhTest)
     }
+
     private func writeLH(_ v: String?) {
         let e = entry()
         store.setFertility(on: selectedDate, bbtCelsius: e?.bbtCelsius, cervicalMucus: e?.cervicalMucus, lhTest: v)
@@ -262,10 +311,10 @@ struct TrackSheet: View {
 
     private func tint(_ c: TrackColor) -> Color {
         switch c {
-        case .rose: return Theme.accent
-        case .amber: return .orange
-        case .blue: return Color(red: 0.36, green: 0.55, blue: 0.85)
-        case .teal: return Theme.fertile
+        case .rose: Theme.accent
+        case .amber: .orange
+        case .blue: Color(red: 0.36, green: 0.55, blue: 0.85)
+        case .teal: Theme.fertile
         }
     }
 }

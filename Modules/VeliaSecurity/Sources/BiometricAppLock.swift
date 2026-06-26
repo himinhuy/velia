@@ -13,13 +13,17 @@ public final class BiometricAppLock: AppLocking {
     private let policy: LAPolicy
 
     /// `.deviceOwnerAuthentication` allows biometric **with passcode fallback** (recommended).
-    public init(reason: String = "Mở khóa Velia", // "Unlock Velia"
-                policy: LAPolicy = .deviceOwnerAuthentication) {
+    public init(
+        reason: String = "Mở khóa Velia", // "Unlock Velia"
+        policy: LAPolicy = .deviceOwnerAuthentication
+    ) {
         self.reason = reason
         self.policy = policy
     }
 
-    public func lock() { isLocked = true }
+    public func lock() {
+        isLocked = true
+    }
 
     /// Evaluates biometrics/passcode and returns an authenticated context the key provider can use.
     @discardableResult

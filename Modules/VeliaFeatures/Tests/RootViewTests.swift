@@ -1,10 +1,12 @@
-import XCTest
 import VeliaCore
+import XCTest
 @testable import VeliaFeatures
 
 @MainActor
 final class RootViewTests: XCTestCase {
-    func testRootViewInstantiates() { _ = RootView() }
+    func testRootViewInstantiates() {
+        _ = RootView()
+    }
 
     func testStoreSeedsPredictionFromOnboarding() {
         let store = CycleStore()
@@ -21,25 +23,25 @@ final class RootViewTests: XCTestCase {
     }
 
     /// Contiguous logged days collapse into one run (one period); non-adjacent days form new cycles.
-    func testContiguousDaysFormOneRun() {
+    func testContiguousDaysFormOneRun() throws {
         let store = CycleStore()
         let cal = Calendar.current
-        let start = cal.date(byAdding: .day, value: -40, to: Date())!
-        for offset in 0..<5 {
-            store.setFlow(on: cal.date(byAdding: .day, value: offset, to: start)!, flow: .medium)
+        let start = try XCTUnwrap(cal.date(byAdding: .day, value: -40, to: Date()))
+        for offset in 0 ..< 5 {
+            try store.setFlow(on: XCTUnwrap(cal.date(byAdding: .day, value: offset, to: start)), flow: .medium)
         }
         XCTAssertEqual(store.periodDays.count, 5)
         XCTAssertEqual(store.periodRuns().count, 1, "5 consecutive days = one period")
         XCTAssertEqual(store.loggedCycleCount, 0)
     }
 
-    func testCycleCountAndAverageFromRuns() {
+    func testCycleCountAndAverageFromRuns() throws {
         let store = CycleStore()
         let cal = Calendar.current
-        var day = cal.date(byAdding: .day, value: -90, to: Date())!
-        for _ in 0..<3 {
-            store.setFlow(on: day, flow: .medium)        // one-day run
-            day = cal.date(byAdding: .day, value: 29, to: day)!
+        var day = try XCTUnwrap(cal.date(byAdding: .day, value: -90, to: Date()))
+        for _ in 0 ..< 3 {
+            store.setFlow(on: day, flow: .medium) // one-day run
+            day = try XCTUnwrap(cal.date(byAdding: .day, value: 29, to: day))
         }
         XCTAssertEqual(store.periodRuns().count, 3)
         XCTAssertEqual(store.loggedCycleCount, 2, "3 runs ⇒ 2 complete cycles")
@@ -94,9 +96,9 @@ final class RootViewTests: XCTestCase {
         XCTAssertEqual(store2.fertilityEntry(on: Date())?.cervicalMucus, "eggwhite")
     }
 
-    func testTrackWithoutPeriodSuppressesPrediction() {
+    func testTrackWithoutPeriodSuppressesPrediction() throws {
         let store = CycleStore()
-        store.addPeriod(start: Calendar.current.date(byAdding: .day, value: -10, to: Date())!)
+        try store.addPeriod(start: XCTUnwrap(Calendar.current.date(byAdding: .day, value: -10, to: Date())))
         store.setMode(.period)
         XCTAssertNotNil(store.prediction, "Period mode forecasts a cycle")
         store.setMode(.noPeriod)
@@ -143,23 +145,36 @@ final class RootViewTests: XCTestCase {
 /// In-memory persistence double (no Keychain/disk) for tests.
 private final class MockPersistence: CyclePersistence, @unchecked Sendable {
     private var state: PersistedState?
-    func load() -> PersistedState? { state }
-    func save(_ state: PersistedState) { self.state = state }
+    func load() -> PersistedState? {
+        state
+    }
+
+    func save(_ state: PersistedState) {
+        self.state = state
+    }
 }
 
 /// In-memory auth store double.
 private final class MockAuthStore: AuthStore, @unchecked Sendable {
     private var state: AuthState?
-    func loadAuth() -> AuthState? { state }
-    func saveAuth(_ state: AuthState) { self.state = state }
+    func loadAuth() -> AuthState? {
+        state
+    }
+
+    func saveAuth(_ state: AuthState) {
+        self.state = state
+    }
 }
 
 @MainActor
 final class AuthTests: XCTestCase {
-    private func fresh() -> AuthManager { AuthManager(store: MockAuthStore()) }
+    private func fresh() -> AuthManager {
+        AuthManager(store: MockAuthStore())
+    }
+
     /// nil = success, otherwise the error (works around Result<Void, _> not being Equatable).
     private func err(_ r: Result<Void, AuthError>) -> AuthError? {
-        if case .failure(let e) = r { return e }; return nil
+        if case let .failure(e) = r { return e }; return nil
     }
 
     func testSignUpThenSessionPersists() {
@@ -194,11 +209,11 @@ final class AuthTests: XCTestCase {
         XCTAssertEqual(err(a.signUp(email: "u@v.app", password: "another1")), .emailTaken)
     }
 
-    func testPasswordIsHashedNotStored() {
+    func testPasswordIsHashedNotStored() throws {
         let store = MockAuthStore()
         let a = AuthManager(store: store)
         a.signUp(email: "u@v.app", password: "secret1")
-        let acct = store.loadAuth()!.accounts[0]
+        let acct = try XCTUnwrap(store.loadAuth()?.accounts[0])
         XCTAssertFalse(acct.hash.isEmpty)
         XCTAssertNotEqual(acct.hash, Data("secret1".utf8), "Stored value is a hash, not the password")
         XCTAssertEqual(acct.hash, AuthManager.pbkdf2("secret1", salt: acct.salt, rounds: acct.rounds))
@@ -224,7 +239,7 @@ final class SubscriptionTests: XCTestCase {
         let sub = fresh()
         XCTAssertTrue(sub.hasAccess, "Fresh install is in the free trial")
         XCTAssertFalse(sub.needsPaywall)
-        if case .trial(let days) = sub.status { XCTAssertEqual(days, 7) } else { XCTFail("expected trial") }
+        if case let .trial(days) = sub.status { XCTAssertEqual(days, 7) } else { XCTFail("expected trial") }
 
         sub.expireTrialForTesting()
         XCTAssertFalse(sub.hasAccess)
@@ -254,8 +269,13 @@ final class SubscriptionTests: XCTestCase {
 /// In-memory registry double (no Keychain/disk).
 private final class MockRegistry: RegistryPersistence, @unchecked Sendable {
     private var registry: ProfileRegistry?
-    func loadRegistry() -> ProfileRegistry? { registry }
-    func saveRegistry(_ registry: ProfileRegistry) { self.registry = registry }
+    func loadRegistry() -> ProfileRegistry? {
+        registry
+    }
+
+    func saveRegistry(_ registry: ProfileRegistry) {
+        self.registry = registry
+    }
 }
 
 @MainActor
