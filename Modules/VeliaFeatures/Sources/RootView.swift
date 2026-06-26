@@ -7,6 +7,7 @@ import VeliaDesignSystem
 /// environment; predictions are computed on-device by VeliaCore.
 public struct RootView: View {
     @State private var profiles: ProfileStore
+    @State private var auth = AuthManager()
     @State private var lock = LockManager()
     @State private var lang = LanguageManager()
     @State private var reminders = ReminderManager()
@@ -24,7 +25,9 @@ public struct RootView: View {
 
     public var body: some View {
         ZStack {
-            if subscription.needsPaywall {
+            if !auth.isAuthenticated {
+                AuthView()                    // must sign in / sign up first
+            } else if subscription.needsPaywall {
                 PaywallView()                 // hard gate after the 7-day trial expires
             } else if let store = profiles.current {
                 mainContent(store)
@@ -37,12 +40,13 @@ public struct RootView: View {
                 Theme.screen.ignoresSafeArea()
                     .overlay(Image(systemName: "lock.fill").font(.largeTitle).foregroundStyle(.secondary))
             }
-            // Biometric lock gate (opt-in), on top of everything.
-            if lock.isLocked {
+            // Biometric lock gate (opt-in) — only once signed in.
+            if lock.isLocked && auth.isAuthenticated {
                 LockScreenView(lock: lock)
                     .transition(.opacity)
             }
         }
+        .environment(auth)
         .environment(lock)
         .environment(lang)
         .environment(profiles)

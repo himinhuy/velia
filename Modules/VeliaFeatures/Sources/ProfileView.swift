@@ -11,6 +11,7 @@ struct ProfileView: View {
     @Environment(ProfileStore.self) private var profiles
     @Environment(ReminderManager.self) private var reminders
     @Environment(SubscriptionManager.self) private var subscription
+    @Environment(AuthManager.self) private var auth
     @Environment(\.dismiss) private var dismiss
     @State private var showPaywall = false
     @State private var confirmCancel = false
@@ -132,6 +133,20 @@ struct ProfileView: View {
                 }
 
                 subscriptionSection
+
+                Section {
+                    if let email = auth.currentEmail {
+                        LabeledContent(L2("Email", "Email"), value: email)
+                    }
+                    Button(role: .destructive) {
+                        dismiss()
+                        auth.logOut()
+                    } label: {
+                        Label(L2("Đăng xuất", "Log out"), systemImage: "rectangle.portrait.and.arrow.right")
+                    }
+                } header: {
+                    Text(L2("Tài khoản", "Account"))
+                }
 
                 Section {
                     NavigationLink {

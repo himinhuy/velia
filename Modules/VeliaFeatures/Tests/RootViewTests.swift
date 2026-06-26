@@ -147,6 +147,73 @@ private final class MockPersistence: CyclePersistence, @unchecked Sendable {
     func save(_ state: PersistedState) { self.state = state }
 }
 
+/// In-memory auth store double.
+private final class MockAuthStore: AuthStore, @unchecked Sendable {
+    private var state: AuthState?
+    func loadAuth() -> AuthState? { state }
+    func saveAuth(_ state: AuthState) { self.state = state }
+}
+
+@MainActor
+final class AuthTests: XCTestCase {
+    private func fresh() -> AuthManager { AuthManager(store: MockAuthStore()) }
+    /// nil = success, otherwise the error (works around Result<Void, _> not being Equatable).
+    private func err(_ r: Result<Void, AuthError>) -> AuthError? {
+        if case .failure(let e) = r { return e }; return nil
+    }
+
+    func testSignUpThenSessionPersists() {
+        let store = MockAuthStore()
+        let a = AuthManager(store: store)
+        XCTAssertFalse(a.isAuthenticated)
+        XCTAssertNil(err(a.signUp(email: "Me@Velia.app", password: "secret1")))
+        XCTAssertTrue(a.isAuthenticated)
+        XCTAssertEqual(a.currentEmail, "me@velia.app", "Email is normalized")
+
+        // New manager on the same store resumes the session.
+        let b = AuthManager(store: store)
+        XCTAssertTrue(b.isAuthenticated)
+    }
+
+    func testLoginWrongAndRight() {
+        let a = fresh()
+        a.signUp(email: "u@v.app", password: "secret1")
+        a.logOut()
+        XCTAssertFalse(a.isAuthenticated)
+        XCTAssertEqual(err(a.logIn(email: "u@v.app", password: "wrong")), .wrongPassword)
+        XCTAssertEqual(err(a.logIn(email: "nope@v.app", password: "secret1")), .noAccount)
+        XCTAssertNil(err(a.logIn(email: "u@v.app", password: "secret1")))
+        XCTAssertTrue(a.isAuthenticated)
+    }
+
+    func testValidationAndDuplicate() {
+        let a = fresh()
+        XCTAssertEqual(err(a.signUp(email: "bad", password: "secret1")), .invalidEmail)
+        XCTAssertEqual(err(a.signUp(email: "u@v.app", password: "123")), .weakPassword)
+        XCTAssertNil(err(a.signUp(email: "u@v.app", password: "secret1")))
+        XCTAssertEqual(err(a.signUp(email: "u@v.app", password: "another1")), .emailTaken)
+    }
+
+    func testPasswordIsHashedNotStored() {
+        let store = MockAuthStore()
+        let a = AuthManager(store: store)
+        a.signUp(email: "u@v.app", password: "secret1")
+        let acct = store.loadAuth()!.accounts[0]
+        XCTAssertFalse(acct.hash.isEmpty)
+        XCTAssertNotEqual(acct.hash, Data("secret1".utf8), "Stored value is a hash, not the password")
+        XCTAssertEqual(acct.hash, AuthManager.pbkdf2("secret1", salt: acct.salt, rounds: acct.rounds))
+    }
+
+    func testResetPassword() {
+        let a = fresh()
+        a.signUp(email: "u@v.app", password: "secret1")
+        a.logOut()
+        a.resetPassword(email: "u@v.app", newPassword: "newpass1")
+        XCTAssertEqual(err(a.logIn(email: "u@v.app", password: "secret1")), .wrongPassword)
+        XCTAssertNil(err(a.logIn(email: "u@v.app", password: "newpass1")))
+    }
+}
+
 @MainActor
 final class SubscriptionTests: XCTestCase {
     private func fresh() -> SubscriptionManager {
