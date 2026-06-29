@@ -164,20 +164,38 @@ struct ProfileView: View {
                 Section {
                     if let email = auth.currentEmail {
                         LabeledContent(L2("Email", "Email"), value: email)
-                    }
-                    Button(role: .destructive) {
-                        dismiss()
-                        auth.logOut()
-                    } label: {
-                        Label(L2("Đăng xuất", "Log out"), systemImage: "rectangle.portrait.and.arrow.right")
-                    }
-                    Button(role: .destructive) {
-                        confirmDeleteAccount = true
-                    } label: {
-                        Label(L2("Xóa tài khoản", "Delete Account"), systemImage: "trash")
+                        Button(role: .destructive) {
+                            dismiss()
+                            auth.logOut()
+                        } label: {
+                            Label(L2("Đăng xuất", "Log out"), systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                        Button(role: .destructive) {
+                            confirmDeleteAccount = true
+                        } label: {
+                            Label(L2("Xóa tài khoản", "Delete Account"), systemImage: "trash")
+                        }
+                    } else {
+                        // Guest (no account) — offer to sign in / register.
+                        Button {
+                            dismiss()
+                            auth.presentAuthGate()
+                        } label: {
+                            Label(
+                                L2("Đăng nhập / Tạo tài khoản", "Sign in / Create account"),
+                                systemImage: "person.crop.circle.badge.plus"
+                            )
+                        }
                     }
                 } header: {
                     Text(L2("Tài khoản", "Account"))
+                } footer: {
+                    if auth.currentEmail == nil {
+                        Text(L2(
+                            "Bạn đang dùng không cần tài khoản. Dữ liệu được lưu riêng tư trên máy này.",
+                            "You're using Velia without an account. Your data stays private on this device."
+                        ))
+                    }
                 }
 
                 Section {

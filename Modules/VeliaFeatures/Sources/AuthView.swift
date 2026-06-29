@@ -68,6 +68,12 @@ struct AuthView: View {
                 .buttonStyle(.bordered)
                 .tint(.primary)
 
+                Button(L2("Tiếp tục không cần tài khoản", "Continue without account")) {
+                    auth.continueWithoutAccount()
+                }
+                .font(.subheadline)
+                .tint(.secondary)
+
                 Text(L2(
                     "Tài khoản & mật khẩu được mã hóa, lưu trên máy — không máy chủ.",
                     "Account & password are encrypted on-device — no server."

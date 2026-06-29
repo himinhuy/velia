@@ -29,8 +29,8 @@ public struct RootView: View {
 
     public var body: some View {
         ZStack {
-            if !auth.isAuthenticated {
-                AuthView() // must sign in / sign up first
+            if auth.isGated {
+                AuthView() // optional login — or "Continue without account"
             } else if subscription.needsPaywall {
                 PaywallView() // hard gate after the 7-day trial expires
             } else if let store = profiles.current {
@@ -45,7 +45,7 @@ public struct RootView: View {
                     .overlay(Image(systemName: "lock.fill").font(.largeTitle).foregroundStyle(.secondary))
             }
             // Biometric lock gate (opt-in) — only once signed in.
-            if lock.isLocked, auth.isAuthenticated {
+            if lock.isLocked, !auth.isGated {
                 LockScreenView(lock: lock)
                     .transition(.opacity)
             }

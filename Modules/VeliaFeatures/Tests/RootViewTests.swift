@@ -219,6 +219,31 @@ final class AuthTests: XCTestCase {
         XCTAssertEqual(acct.hash, AuthManager.pbkdf2("secret1", salt: acct.salt, rounds: acct.rounds))
     }
 
+    func testOptionalLoginGate() {
+        let store = MockAuthStore()
+        let a = AuthManager(store: store)
+        XCTAssertTrue(a.isGated, "Fresh install gates until sign-in or skip")
+        a.continueWithoutAccount()
+        XCTAssertFalse(a.isGated, "Guest can use the app without an account")
+        XCTAssertFalse(a.isAuthenticated)
+
+        // Guest choice persists across relaunch.
+        XCTAssertFalse(AuthManager(store: store).isGated)
+
+        a.presentAuthGate()
+        XCTAssertTrue(a.isGated, "Can return to the login gate from Settings")
+    }
+
+    func testSignUpClearsGate() {
+        let a = fresh()
+        a.continueWithoutAccount()
+        a.signUp(email: "u@v.app", password: "secret1")
+        XCTAssertTrue(a.isAuthenticated)
+        XCTAssertFalse(a.isGated)
+        a.logOut()
+        XCTAssertTrue(a.isGated, "Logging out returns to the gate")
+    }
+
     func testDeleteAccount() {
         let a = fresh()
         a.signUp(email: "u@v.app", password: "secret1")

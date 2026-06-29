@@ -11,10 +11,12 @@ struct AuthAccount: Codable, Equatable {
     var rounds: Int
 }
 
-/// Persisted auth state: the accounts + the currently signed-in email (session).
+/// Persisted auth state: the accounts, the signed-in email (session), and whether the user chose
+/// to continue without an account. `guest` is optional for migration (old states decode to nil).
 struct AuthState: Codable {
     var accounts: [AuthAccount]
     var session: String?
+    var guest: Bool?
 }
 
 /// Persistence boundary (injectable so tests avoid Keychain/disk).
@@ -53,22 +55,44 @@ public enum AuthError: Error, Equatable {
 @Observable
 final class AuthManager {
     private(set) var currentEmail: String?
+    /// The user chose "continue without account" — don't block the app on registration.
+    private(set) var proceededWithoutAccount: Bool
 
     private var accounts: [AuthAccount]
     private let store: AuthStore
 
     init(store: AuthStore = SecureStore(fileName: "velia-auth.enc")) {
         self.store = store
-        let state = store.loadAuth() ?? AuthState(accounts: [], session: nil)
+        let state = store.loadAuth() ?? AuthState(accounts: [], session: nil, guest: nil)
         accounts = state.accounts
         // Resume the session only if the account still exists.
         currentEmail = state.session.flatMap { email in
             state.accounts.contains { $0.email == email } ? email : nil
         }
+        proceededWithoutAccount = state.guest ?? false
     }
 
     var isAuthenticated: Bool {
         currentEmail != nil
+    }
+
+    /// Whether to show the login gate. Login is OPTIONAL — only gate until the user either signs in
+    /// or explicitly continues without an account.
+    var isGated: Bool {
+        !isAuthenticated && !proceededWithoutAccount
+    }
+
+    /// Skip registration and use the app locally (Face ID/PIN still protect data).
+    func continueWithoutAccount() {
+        proceededWithoutAccount = true
+        persist()
+    }
+
+    /// Bring back the login gate (e.g. a guest taps "Sign in" in Settings).
+    func presentAuthGate() {
+        currentEmail = nil
+        proceededWithoutAccount = false
+        persist()
     }
 
     // MARK: Actions
@@ -107,6 +131,7 @@ final class AuthManager {
 
     func logOut() {
         currentEmail = nil
+        proceededWithoutAccount = false // return to the login gate
         persist()
     }
 
@@ -116,6 +141,7 @@ final class AuthManager {
         guard let email = currentEmail else { return }
         accounts.removeAll { $0.email == email }
         currentEmail = nil
+        proceededWithoutAccount = false // back to the gate
         persist()
     }
 
@@ -136,7 +162,7 @@ final class AuthManager {
     // MARK: Helpers
 
     private func persist() {
-        store.saveAuth(AuthState(accounts: accounts, session: currentEmail))
+        store.saveAuth(AuthState(accounts: accounts, session: currentEmail, guest: proceededWithoutAccount))
     }
 
     private func normalize(_ email: String) -> String {
