@@ -76,9 +76,6 @@ let project = Project(
             infoPlist: .extendingDefault(with: [
                 "UILaunchScreen": ["UIColorName": "LaunchBackground"],
                 "CFBundleDisplayName": "Velia",
-                // Privacy usage strings (HealthKit read for temperature/HR — fertility signals).
-                "NSHealthShareUsageDescription":
-                    "Velia reads body temperature, heart rate and sleep from Health to improve cycle predictions. This data stays on your device.",
                 "NSFaceIDUsageDescription":
                     "Velia uses Face ID to lock the app so only you can open it.",
                 // Only standard crypto (CryptoKit/CommonCrypto) for local data protection → exempt.
@@ -97,12 +94,15 @@ let project = Project(
             ]),
             sources: ["App/Sources/**"],
             resources: ["App/Resources/**"],
+            entitlements: .dictionary([
+                "com.apple.developer.applesignin": ["Default"]
+            ]),
             dependencies: [.target(name: "VeliaFeatures")],
             settings: .settings(base: [
-                // Device builds: automatic dev signing with the team resolved above.
+                // Automatic signing picks the right identity per configuration: Apple Development for
+                // Debug/run, Apple Distribution when archiving for the App Store.
                 "CODE_SIGN_STYLE": "Automatic",
                 "DEVELOPMENT_TEAM": .string(developmentTeam),
-                "CODE_SIGN_IDENTITY": "Apple Development",
                 "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
                 // Release builds are fully standalone (no dev server) — native app embeds everything.
                 "PRODUCT_BUNDLE_IDENTIFIER": "\(bundlePrefix).ios"

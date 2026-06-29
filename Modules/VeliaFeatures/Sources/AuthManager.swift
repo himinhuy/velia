@@ -4,11 +4,13 @@ import Observation
 import Security
 
 /// One local account. The password is never stored — only a PBKDF2 hash + its salt.
+/// Apple accounts have no password (`appleUserID` set, empty hash).
 struct AuthAccount: Codable, Equatable {
     var email: String
     var salt: Data
     var hash: Data
     var rounds: Int
+    var appleUserID: String?
 }
 
 /// Persisted auth state: the accounts, the signed-in email (session), and whether the user chose
@@ -127,6 +129,26 @@ final class AuthManager {
         currentEmail = email
         persist()
         return .success(())
+    }
+
+    /// Sign in with Apple — create or resume a local account keyed by Apple's stable user id.
+    /// No server: we trust the verified Apple credential and keep the identity on-device.
+    func signInWithApple(userID: String, email: String?) {
+        if let existing = accounts.first(where: { $0.appleUserID == userID }) {
+            currentEmail = existing.email
+        } else {
+            let display = email ?? "Apple ID"
+            accounts.append(AuthAccount(
+                email: display,
+                salt: Data(),
+                hash: Data(),
+                rounds: 0,
+                appleUserID: userID
+            ))
+            currentEmail = display
+        }
+        proceededWithoutAccount = false
+        persist()
     }
 
     func logOut() {
