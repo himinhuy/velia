@@ -110,6 +110,15 @@ final class AuthManager {
         persist()
     }
 
+    /// Permanently delete the signed-in account (App Store Guideline 5.1.1(v)). Removes the local
+    /// credential and ends the session. (Cycle data lives per-profile, independent of the account.)
+    func deleteCurrentAccount() {
+        guard let email = currentEmail else { return }
+        accounts.removeAll { $0.email == email }
+        currentEmail = nil
+        persist()
+    }
+
     /// Local password reset (no email service on-device). Sets a new password for an existing email.
     @discardableResult
     func resetPassword(email rawEmail: String, newPassword: String) -> Result<Void, AuthError> {

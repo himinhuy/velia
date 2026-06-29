@@ -81,6 +81,9 @@ let project = Project(
                     "Velia reads body temperature, heart rate and sleep from Health to improve cycle predictions. This data stays on your device.",
                 "NSFaceIDUsageDescription":
                     "Velia uses Face ID to lock the app so only you can open it.",
+                // Only standard crypto (CryptoKit/CommonCrypto) for local data protection → exempt.
+                // Declaring this skips the export-compliance prompt on every upload.
+                "ITSAppUsesNonExemptEncryption": false,
                 // Discretion suite: a neutral alternate icon switchable at runtime. The primary icon
                 // is the asset-catalog AppIcon; the alternate is loose PNGs (AltNeutral@2x/@3x).
                 "CFBundleIcons": [

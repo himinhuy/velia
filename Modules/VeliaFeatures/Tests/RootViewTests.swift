@@ -219,6 +219,16 @@ final class AuthTests: XCTestCase {
         XCTAssertEqual(acct.hash, AuthManager.pbkdf2("secret1", salt: acct.salt, rounds: acct.rounds))
     }
 
+    func testDeleteAccount() {
+        let a = fresh()
+        a.signUp(email: "u@v.app", password: "secret1")
+        XCTAssertTrue(a.isAuthenticated)
+        a.deleteCurrentAccount()
+        XCTAssertFalse(a.isAuthenticated, "Deleting the account signs out")
+        // The credential is gone — logging in again fails.
+        XCTAssertEqual(err(a.logIn(email: "u@v.app", password: "secret1")), .noAccount)
+    }
+
     func testResetPassword() {
         let a = fresh()
         a.signUp(email: "u@v.app", password: "secret1")
