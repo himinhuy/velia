@@ -8,7 +8,6 @@ import VeliaDesignSystem
 struct TrackSheet: View {
     let store: CycleStore
     @State var selectedDate: Date
-    @Environment(HealthKitService.self) private var health
     @Environment(\.dismiss) private var dismiss
 
     private let cal = Calendar.current
@@ -212,20 +211,6 @@ struct TrackSheet: View {
                     Stepper(String(format: "%.2f °C", bbt), value: Binding(
                         get: { bbt }, set: { writeBBT($0) }
                     ), in: 35.0 ... 38.5, step: 0.05)
-                }
-                if health.isAvailable {
-                    Button {
-                        Task {
-                            await health.requestAuthorization()
-                            if let celsius = await health.basalBodyTemperature(on: selectedDate) {
-                                writeBBT((celsius * 20).rounded() / 20) // snap to 0.05°C
-                            }
-                        }
-                    } label: {
-                        Label(L2("Nhập từ Health", "Import from Health"), systemImage: "heart.text.square")
-                            .font(.caption)
-                    }
-                    .tint(Theme.accent)
                 }
             }
             .padding().background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
