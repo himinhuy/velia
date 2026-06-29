@@ -15,6 +15,7 @@ struct ProfileView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(\.dismiss) private var dismiss
     @State private var showPaywall = false
+    @State private var confirmDeleteAccount = false
 
     @State private var cycleLength: Int
     @State private var periodLength: Int
@@ -170,6 +171,11 @@ struct ProfileView: View {
                     } label: {
                         Label(L2("Đăng xuất", "Log out"), systemImage: "rectangle.portrait.and.arrow.right")
                     }
+                    Button(role: .destructive) {
+                        confirmDeleteAccount = true
+                    } label: {
+                        Label(L2("Xóa tài khoản", "Delete Account"), systemImage: "trash")
+                    }
                 } header: {
                     Text(L2("Tài khoản", "Account"))
                 }
@@ -288,6 +294,22 @@ struct ProfileView: View {
             .task { iconOption = AppIconOption.current }
             .sheet(isPresented: $showPaywall) {
                 PaywallView(onClose: { showPaywall = false })
+            }
+            .confirmationDialog(
+                L2("Xóa tài khoản?", "Delete account?"),
+                isPresented: $confirmDeleteAccount,
+                titleVisibility: .visible
+            ) {
+                Button(L2("Xóa tài khoản", "Delete Account"), role: .destructive) {
+                    dismiss()
+                    auth.deleteCurrentAccount()
+                }
+                Button(L2("Hủy", "Cancel"), role: .cancel) {}
+            } message: {
+                Text(L2(
+                    "Tài khoản của bạn sẽ bị xóa khỏi thiết bị này. Hành động này không thể hoàn tác.",
+                    "Your account will be removed from this device. This can't be undone."
+                ))
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(L2("Hủy", "Cancel")) { dismiss() } }

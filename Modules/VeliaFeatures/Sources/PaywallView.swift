@@ -111,6 +111,13 @@ struct PaywallView: View {
                 ))
                 .font(.caption2).foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
+
+                HStack(spacing: 16) {
+                    Link(L2("Điều khoản", "Terms of Use"), destination: Legal.termsURL)
+                    Link(L2("Quyền riêng tư", "Privacy Policy"), destination: Legal.privacyURL)
+                }
+                .font(.caption2)
+                .tint(Theme.accent)
                 .padding(.bottom)
             }
             .padding()
