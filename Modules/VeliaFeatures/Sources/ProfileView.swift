@@ -11,10 +11,10 @@ struct ProfileView: View {
     @Environment(ProfileStore.self) private var profiles
     @Environment(ReminderManager.self) private var reminders
     @Environment(SubscriptionManager.self) private var subscription
+    @Environment(StoreKitService.self) private var storeKit
     @Environment(AuthManager.self) private var auth
     @Environment(\.dismiss) private var dismiss
     @State private var showPaywall = false
-    @State private var confirmCancel = false
 
     @State private var cycleLength: Int
     @State private var periodLength: Int
@@ -49,7 +49,9 @@ struct ProfileView: View {
             case let .premium(renewal):
                 LabeledContent(L2("Gói", "Plan"), value: "Premium")
                 LabeledContent(L2("Gia hạn", "Renews"), value: dateString(renewal))
-                Button(role: .destructive) { confirmCancel = true } label: {
+                Button(role: .destructive) {
+                    Task { await storeKit.manageSubscriptions() }
+                } label: {
                     Label(L2("Hủy đăng ký", "Cancel Subscription"), systemImage: "xmark.circle")
                 }
             case .expired:
@@ -286,16 +288,6 @@ struct ProfileView: View {
             .task { iconOption = AppIconOption.current }
             .sheet(isPresented: $showPaywall) {
                 PaywallView(onClose: { showPaywall = false })
-            }
-            .confirmationDialog(
-                L2("Hủy đăng ký Premium?", "Cancel Premium subscription?"),
-                isPresented: $confirmCancel,
-                titleVisibility: .visible
-            ) {
-                Button(L2("Hủy đăng ký", "Cancel subscription"), role: .destructive) {
-                    subscription.cancel()
-                }
-                Button(L2("Giữ lại", "Keep it"), role: .cancel) {}
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(L2("Hủy", "Cancel")) { dismiss() } }

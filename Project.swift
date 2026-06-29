@@ -120,9 +120,23 @@ let project = Project(
             .target(name: "VeliaDesignSystem"),
             .package(product: "VeliaCore")
         ])
-        + module("VeliaDesignSystem")
+        + module("VeliaDesignSystem"),
     // Deferred (scaffolds present under Modules/, re-add once SQLCipher GRDB is configured):
     //   module("VeliaData", deps: [VeliaSecurity, VeliaCore, GRDB])
     //   module("VeliaSecurity")
     //   module("VeliaHealth", deps: [VeliaCore])
+    schemes: [
+        // Custom app scheme so local StoreKit testing uses the bundled config (simulator).
+        // On a real device with a sandbox tester this is ignored.
+        .scheme(
+            name: "Velia",
+            shared: true,
+            buildAction: .buildAction(targets: ["Velia"]),
+            testAction: .targets(["VeliaUITests"]),
+            runAction: .runAction(
+                configuration: .debug,
+                options: .options(storeKitConfigurationPath: "Velia.storekit")
+            )
+        )
+    ]
 )

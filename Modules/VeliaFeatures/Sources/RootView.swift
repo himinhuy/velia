@@ -11,7 +11,8 @@ public struct RootView: View {
     @State private var lock = LockManager()
     @State private var lang = LanguageManager()
     @State private var reminders = ReminderManager()
-    @State private var subscription = SubscriptionManager()
+    @State private var subscription: SubscriptionManager
+    @State private var store: StoreKitService
     @State private var tab: Tab = .cycle
     /// Non-nil while the Track sheet is open, holding the day being logged.
     @State private var trackDate: Date?
@@ -21,6 +22,9 @@ public struct RootView: View {
 
     public init(profiles: ProfileStore = ProfileStore()) {
         _profiles = State(initialValue: profiles)
+        let sub = SubscriptionManager()
+        _subscription = State(initialValue: sub)
+        _store = State(initialValue: StoreKitService(subscription: sub))
     }
 
     public var body: some View {
@@ -52,8 +56,9 @@ public struct RootView: View {
         .environment(profiles)
         .environment(reminders)
         .environment(subscription)
+        .environment(store)
         .task(id: profiles.activeID) {
-            if let store = profiles.current { await reminders.apply(store: store) }
+            if let cycleStore = profiles.current { await reminders.apply(store: cycleStore) }
         }
         .id(lang.language) // rebuild the tree so every L2(...) re-evaluates on language switch
         .task { await lock.authenticate() }
@@ -61,6 +66,7 @@ public struct RootView: View {
             switch phase {
             case .active:
                 Task { await lock.authenticate() }
+                Task { await store.refreshEntitlement() } // catch renewals/cancellations
             case .background:
                 lock.lock() // require auth on return
             default:

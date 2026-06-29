@@ -5,6 +5,7 @@ import VeliaDesignSystem
 /// upsell from Settings. "Subscribe Now" runs the (simulated) purchase and returns full access.
 struct PaywallView: View {
     @Environment(SubscriptionManager.self) private var subscription
+    @Environment(StoreKitService.self) private var store
     /// Forced gate (no dismiss) vs. upsell sheet (dismissible).
     var onClose: (() -> Void)?
 
@@ -65,7 +66,7 @@ struct PaywallView: View {
                 Spacer()
 
                 VStack(spacing: 6) {
-                    Text("\(SubscriptionManager.priceString) / \(L2("năm", "year"))")
+                    Text("\(store.priceText) / \(L2("năm", "year"))")
                         .font(.system(.title2, design: .rounded).weight(.bold))
                     Text(L2(
                         "Tự động gia hạn hằng năm · hủy bất cứ lúc nào",
@@ -74,22 +75,42 @@ struct PaywallView: View {
                     .font(.caption2).foregroundStyle(.secondary)
                 }
 
+                if let error = store.errorMessage {
+                    Text(error).font(.footnote).foregroundStyle(.red).multilineTextAlignment(.center)
+                }
+
                 Button {
-                    subscription.subscribe()
-                    onClose?()
+                    Task {
+                        await store.purchase()
+                        if subscription.isSubscribed { onClose?() }
+                    }
                 } label: {
-                    Text(L2("Đăng ký ngay", "Subscribe Now"))
-                        .frame(maxWidth: .infinity).padding(.vertical, 6)
+                    if store.purchasing {
+                        ProgressView().frame(maxWidth: .infinity).padding(.vertical, 6)
+                    } else {
+                        Text(L2("Đăng ký ngay", "Subscribe Now"))
+                            .frame(maxWidth: .infinity).padding(.vertical, 6)
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.accent)
+                .disabled(store.purchasing)
                 .padding(.horizontal)
 
+                Button(L2("Khôi phục giao dịch", "Restore purchases")) {
+                    Task {
+                        await store.restore()
+                        if subscription.isSubscribed { onClose?() }
+                    }
+                }
+                .font(.footnote).tint(Theme.accent)
+
                 Text(L2(
-                    "Thanh toán mô phỏng cục bộ (chưa tính phí thật).",
-                    "Local simulated purchase (no real charge)."
+                    "Gia hạn tự động qua App Store. Hủy bất cứ lúc nào trong Cài đặt.",
+                    "Auto-renews via the App Store. Cancel anytime in Settings."
                 ))
                 .font(.caption2).foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
                 .padding(.bottom)
             }
             .padding()
