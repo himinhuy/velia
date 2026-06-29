@@ -82,16 +82,21 @@ public final class SubscriptionManager {
 
     // MARK: Actions
 
-    /// Simulated purchase. Swap this body for a StoreKit 2 `Product.purchase()` flow.
-    public func subscribe() {
-        isSubscribed = true
-        renewalDate = oneYearOut()
+    /// Source of truth comes from StoreKit (`StoreKitService.refreshEntitlement`). Cached so the
+    /// app doesn't flash the paywall on cold launch before StoreKit responds.
+    public func updateEntitlement(active: Bool, renewal: Date?) {
+        isSubscribed = active
+        renewalDate = renewal
     }
 
-    /// Cancel — immediate in this local model (real StoreKit cancellation is managed by the system).
+    /// Local grant — used by the DEBUG demo + unit tests (the real flow goes through StoreKit).
+    public func subscribe() {
+        updateEntitlement(active: true, renewal: oneYearOut())
+    }
+
+    /// Local clear — DEBUG/tests only; real cancellation is via the system manage-subscriptions sheet.
     public func cancel() {
-        isSubscribed = false
-        renewalDate = nil
+        updateEntitlement(active: false, renewal: nil)
     }
 
     private func oneYearOut() -> Date {
