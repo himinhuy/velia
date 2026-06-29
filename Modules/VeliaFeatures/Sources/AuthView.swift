@@ -1,3 +1,4 @@
+import AuthenticationServices
 import SwiftUI
 import VeliaDesignSystem
 
@@ -13,7 +14,6 @@ struct AuthView: View {
     @State private var confirm = ""
     @State private var error: String?
     @State private var showForgot = false
-    @State private var showAppleNote = false
 
     var body: some View {
         ScrollView {
@@ -61,12 +61,19 @@ struct AuthView: View {
 
                 HStack { line; Text(L2("hoặc", "or")).font(.caption).foregroundStyle(.secondary); line }
 
-                Button { showAppleNote = true } label: {
-                    Label(L2("Tiếp tục với Apple", "Continue with Apple"), systemImage: "apple.logo")
-                        .frame(maxWidth: .infinity).padding(.vertical, 6)
-                }
-                .buttonStyle(.bordered)
-                .tint(.primary)
+                SignInWithAppleButton(.continue, onRequest: { request in
+                    request.requestedScopes = [.fullName, .email]
+                }, onCompletion: { result in
+                    if case let .success(authorization) = result,
+                       let cred = authorization.credential as? ASAuthorizationAppleIDCredential
+                    {
+                        auth.signInWithApple(userID: cred.user, email: cred.email)
+                    } else if case .failure = result {
+                        error = L2("Không đăng nhập được với Apple.", "Couldn't sign in with Apple.")
+                    }
+                })
+                .signInWithAppleButtonStyle(.white)
+                .frame(height: 48)
 
                 Button(L2("Tiếp tục không cần tài khoản", "Continue without account")) {
                     auth.continueWithoutAccount()
@@ -86,14 +93,6 @@ struct AuthView: View {
         }
         .background(Theme.screen)
         .sheet(isPresented: $showForgot) { ForgotPasswordView() }
-        .alert(L2("Sắp ra mắt", "Coming soon"), isPresented: $showAppleNote) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(L2(
-                "Đăng nhập với Apple cần tài khoản Apple Developer trả phí. Hãy dùng email & mật khẩu.",
-                "Sign in with Apple requires a paid Apple Developer account. Please use email & password for now."
-            ))
-        }
     }
 
     private var line: some View {

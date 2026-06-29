@@ -97,12 +97,16 @@ let project = Project(
             ]),
             sources: ["App/Sources/**"],
             resources: ["App/Resources/**"],
+            entitlements: .dictionary([
+                "com.apple.developer.applesignin": ["Default"],
+                "com.apple.developer.healthkit": true
+            ]),
             dependencies: [.target(name: "VeliaFeatures")],
             settings: .settings(base: [
-                // Device builds: automatic dev signing with the team resolved above.
+                // Automatic signing picks the right identity per configuration: Apple Development for
+                // Debug/run, Apple Distribution when archiving for the App Store.
                 "CODE_SIGN_STYLE": "Automatic",
                 "DEVELOPMENT_TEAM": .string(developmentTeam),
-                "CODE_SIGN_IDENTITY": "Apple Development",
                 "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
                 // Release builds are fully standalone (no dev server) — native app embeds everything.
                 "PRODUCT_BUNDLE_IDENTIFIER": "\(bundlePrefix).ios"

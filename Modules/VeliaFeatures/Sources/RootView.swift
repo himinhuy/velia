@@ -11,6 +11,7 @@ public struct RootView: View {
     @State private var lock = LockManager()
     @State private var lang = LanguageManager()
     @State private var reminders = ReminderManager()
+    @State private var health = HealthKitService()
     @State private var subscription: SubscriptionManager
     @State private var store: StoreKitService
     @State private var tab: Tab = .cycle
@@ -55,6 +56,7 @@ public struct RootView: View {
         .environment(lang)
         .environment(profiles)
         .environment(reminders)
+        .environment(health)
         .environment(subscription)
         .environment(store)
         .task(id: profiles.activeID) {
